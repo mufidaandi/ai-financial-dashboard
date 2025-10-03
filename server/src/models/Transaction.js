@@ -13,9 +13,31 @@ const transactionSchema = new mongoose.Schema(
       required: true,
     },
     category: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Category",
+      required: false,
+    },
+    account: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Account",
+      required: false,
+    },
+    // For transfers and payments - source account
+    fromAccount: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Account",
+      required: false,
+    },
+    // For transfers and payments - destination account
+    toAccount: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Account",
+      required: false,
+    },
+    type: {
       type: String,
-      enum: ["groceries", "utilities", "rent", "entertainment", "other"],
-      default: "other",
+      required: true,
+      enum: ['income', 'expense', 'transfer']
     },
     amount: {
       type: Number,
@@ -23,7 +45,7 @@ const transactionSchema = new mongoose.Schema(
     },
     date: {
       type: Date,
-      default: Date.now,
+      required: true,
     },
   },
   { timestamps: true }

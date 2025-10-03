@@ -1,26 +1,35 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
-import OpenAI from "openai";
 import authRoutes from "./routes/authRoutes.js";
 import connectDB from "./config/db.js";
 import transactionRoutes from "./routes/transactionRoutes.js";
+import categoryRoutes from "./routes/categoryRoutes.js";
+import accountRoutes from "./routes/accountRoutes.js";
+import aiRoutes from "./routes/aiRoutes.js";
 
 dotenv.config();
 connectDB();
 
 const app = express();
-app.use(cors());
+
+// Configure CORS with specific options
+app.use(cors({
+  origin: 'http://localhost:5173', // Frontend URL
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
+
 app.use(express.json());
 
-
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
-
 // Routes
+
 app.use("/api/auth", authRoutes);
 app.use("/api/transactions", transactionRoutes);
+app.use("/api/categories", categoryRoutes);
+app.use("/api/accounts", accountRoutes);
+app.use("/api/ai", aiRoutes);
 
 
 app.get("/", (req, res) => {

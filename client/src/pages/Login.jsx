@@ -1,50 +1,74 @@
-import { useState } from "react";
+import { useState, useContext } from "react";
+import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import authService from "../services/authService";
+import { AuthContext } from "../context/AuthContext";
+import { useToast } from "../context/ToastContext";
+import { Button } from "../components/ui/button";
+import { Input } from "../components/ui/input";
+import { Label } from "../components/ui/label";
+import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "../components/ui/card";
 
 function Login() {
-  const [form, setForm] = useState({ email: "", password: "" });
+  const { login } = useContext(AuthContext);
+  const { error } = useToast();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const navigate = useNavigate();
-
-  const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await authService.login(form);
+      const res = await axios.post("http://localhost:3000/api/auth/login", {
+        email,
+        password,
+      });
+      
+      // Use AuthContext login function to update both context and localStorage
+      login(res.data);
       navigate("/dashboard");
     } catch (err) {
-      console.error("Login failed", err);
-      alert("Invalid credentials");
+      console.error("Login error:", err.response?.data || err);
+      error("Login failed. Please check your credentials.");
     }
   };
 
   return (
-    <div className="p-6 max-w-md mx-auto">
-      <h1 className="text-2xl font-bold mb-4">Login</h1>
-      <form onSubmit={handleSubmit} className="space-y-3">
-        <input
-          type="email"
-          name="email"
-          placeholder="Email"
-          value={form.email}
-          onChange={handleChange}
-          className="border p-2 w-full"
-        />
-        <input
-          type="password"
-          name="password"
-          placeholder="Password"
-          value={form.password}
-          onChange={handleChange}
-          className="border p-2 w-full"
-        />
-        <button type="submit" className="bg-blue-500 text-white px-4 py-2 rounded">
-          Login
-        </button>
-      </form>
+  <div className="min-h-screen flex items-center justify-center bg-slate-200 dark:bg-gray-900">
+  <Card className="w-full max-w-md bg-neutral-800 text-white border-none dark:bg-gray-800 dark:text-gray-100">
+        <CardHeader className="border-none flex align-center flex-col w-2/3 mx-auto pt-6">
+          <CardTitle className="text-center">Login to your account</CardTitle>
+          <CardDescription className="text-center text-gray-400 dark:text-gray-300 mb-4 text-sm">Enter your email and password to access your dashboard.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-3">
+            <Label htmlFor="email" className="text-m text-white dark:text-gray-200">Email</Label>
+            <Input
+              className="mt-0 bg-neutral-700 text-white dark:bg-gray-700 dark:text-gray-100"
+              type="email"
+              placeholder="Email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
+            <Label htmlFor="password" className="text-m text-white dark:text-gray-200">Password</Label>
+            <Input
+              className="mt-0 bg-neutral-700 text-white dark:bg-gray-700 dark:text-gray-100"
+              type="password"
+              placeholder="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
+            <Button type="submit" className="w-full mt-4">Login</Button>
+          </form>
+          <p className="text-center text-sm text-white dark:text-gray-300 mt-4">
+            Don’t have an account?{" "}
+            <a href="/register" className="text-blue-400 dark:text-blue-300 hover:underline">
+              Register
+            </a>
+          </p>
+        </CardContent>
+      </Card>
     </div>
   );
 }

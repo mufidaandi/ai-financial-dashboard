@@ -1,24 +1,29 @@
 // src/services/transactionService.js
-import axios from "axios";
-
-const API_URL = "http://localhost:3000/api/transactions";
+import API from "../api.js";
 
 // Get all transactions
 const getTransactions = async () => {
-  const res = await axios.get(API_URL);
+  const res = await API.get("/transactions");
   return res.data;
 };
 
 // Add new transaction
-const addTransaction = async (transactionData) => {
-  const res = await axios.post(API_URL, transactionData);
+const addTransaction = async (data) => {
+  console.log("Adding transaction with data:", data);
+  const res = await API.post("/transactions", data);
+  return res.data;
+};
+
+// Update transaction
+const updateTransaction = async (id, data) => {
+  const res = await API.put(`/transactions/${id}`, data);
   return res.data;
 };
 
 // Delete transaction
 const deleteTransaction = async (id) => {
-  const res = await axios.delete(`${API_URL}/${id}`);
+  const res = await API.delete(`/transactions/${id}`);
   return res.data;
 };
 
-export default { getTransactions, addTransaction, deleteTransaction };
+export default { getTransactions, addTransaction, updateTransaction, deleteTransaction };

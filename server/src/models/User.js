@@ -15,6 +15,16 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    country: {
+      type: String,
+      default: "US",
+      enum: ["US", "CA", "GB", "EU", "JP", "AU", "IN", "CN", "BR", "MX"]
+    },
+    currency: {
+      type: String,
+      default: "USD",
+      enum: ["USD", "CAD", "GBP", "EUR", "JPY", "AUD", "INR", "CNY", "BRL", "MXN"]
+    }
   },
   { timestamps: true }
 );

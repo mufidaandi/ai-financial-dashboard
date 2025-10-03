@@ -10,20 +10,31 @@ const router = express.Router();
 // @access  Private
 router.post("/", protect, async (req, res) => {
   try {
-    const { description, category, amount, date } = req.body;
+    const { type, amount, category, description, account, date } = req.body;
 
-    const transaction = new Transaction({
+    // Build transaction object with required fields
+    const transactionData = {
       user: req.user._id,
       description,
-      category,
       amount,
       date,
-    });
+      type
+    };
+
+    // Only add optional fields if they exist and are not empty
+    if (category && category.trim() !== "") {
+      transactionData.category = category;
+    }
+    if (account && account.trim() !== "") {
+      transactionData.account = account;
+    }
+
+    const transaction = new Transaction(transactionData);
 
     const createdTransaction = await transaction.save();
     res.status(201).json(createdTransaction);
   } catch (err) {
-    res.status(500).json({ message: "Server error" });
+    res.status(500).json({ message: "Server error adding transaction", error: err.message });
   }
 });
 
@@ -37,7 +48,7 @@ router.get("/", protect, async (req, res) => {
     });
     res.json(transactions);
   } catch (err) {
-    res.status(500).json({ message: "Server error" });
+    res.status(500).json({ message: "Server error fetching transactions" });
   }
 });
 
@@ -65,7 +76,7 @@ router.put("/:id", protect, async (req, res) => {
 
     res.json(updatedTransaction);
   } catch (err) {
-    res.status(500).json({ message: "Server error" });
+    res.status(500).json({ message: "Server error updating transaction" });
   }
 });
 
@@ -87,7 +98,7 @@ router.delete("/:id", protect, async (req, res) => {
     await transaction.deleteOne();
     res.json({ message: "Transaction removed" });
   } catch (err) {
-    res.status(500).json({ message: "Server error" });
+    res.status(500).json({ message: "Server error deleting transaction" });
   }
 });
 
