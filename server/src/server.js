@@ -50,6 +50,27 @@ app.get("/", (req, res) => {
   res.send("Server is working!");
 });
 
+// Test database connection endpoint
+app.get("/api/test-db", async (req, res) => {
+  try {
+    const mongoose = await import('mongoose');
+    const isConnected = mongoose.default.connection.readyState === 1;
+    res.json({ 
+      success: true, 
+      database: isConnected ? 'Connected' : 'Not Connected',
+      mongoUri: process.env.MONGO_URI ? 'Set' : 'Not Set',
+      jwtSecret: process.env.JWT_SECRET ? 'Set' : 'Not Set'
+    });
+  } catch (error) {
+    res.status(500).json({ 
+      success: false, 
+      error: error.message,
+      mongoUri: process.env.MONGO_URI ? 'Set' : 'Not Set',
+      jwtSecret: process.env.JWT_SECRET ? 'Set' : 'Not Set'
+    });
+  }
+});
+
 const PORT = process.env.PORT || 3000;
 
 // For local development
