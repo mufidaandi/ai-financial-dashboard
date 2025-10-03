@@ -7,6 +7,32 @@ import { protect } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
+/**
+ * @swagger
+ * /api/auth/register:
+ *   post:
+ *     summary: Register a new user
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *               email:
+ *                 type: string
+ *               password:
+ *                 type: string
+ *     responses:
+ *       201:
+ *         description: User registered successfully
+ *       400:
+ *         description: User already exists
+ *       500:
+ *         description: Server error registering user
+ */
 // @route   POST /api/auth/register
 // @desc    Register a new user
 router.post("/register", async (req, res) => {
@@ -52,6 +78,30 @@ router.post("/register", async (req, res) => {
   }
 });
 
+/**
+ * @swagger
+ * /api/auth/login:
+ *   post:
+ *     summary: Login user and return token
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               email:
+ *                 type: string
+ *               password:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Successful login
+ *       400:
+ *         description: Invalid credentials
+ *       500:
+ *         description: Server error logging in user
+ */
 // @route   POST /api/auth/login
 // @desc    Login user and return token
 router.post("/login", async (req, res) => {
@@ -94,6 +144,38 @@ router.post("/login", async (req, res) => {
   }
 });
 
+/**
+ * @swagger
+ * /api/auth/profile:
+ *   put:
+ *     summary: Update user profile
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *               email:
+ *                 type: string
+ *               country:
+ *                 type: string
+ *               currency:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: User profile updated
+ *       400:
+ *         description: Email already in use
+ *       404:
+ *         description: User not found
+ *       500:
+ *         description: Server error updating profile
+ */
 // @route   PUT /api/auth/profile
 // @desc    Update user profile
 router.put("/profile", protect, async (req, res) => {
@@ -141,6 +223,34 @@ router.put("/profile", protect, async (req, res) => {
   }
 });
 
+/**
+ * @swagger
+ * /api/auth/password:
+ *   put:
+ *     summary: Change user password
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               currentPassword:
+ *                 type: string
+ *               newPassword:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Password changed successfully
+ *       400:
+ *         description: Invalid input or current password incorrect
+ *       404:
+ *         description: User not found
+ *       500:
+ *         description: Server error changing password
+ */
 // @route   PUT /api/auth/password
 // @desc    Change user password
 router.put("/password", protect, async (req, res) => {
@@ -182,6 +292,15 @@ router.put("/password", protect, async (req, res) => {
   }
 });
 
+/**
+ * @swagger
+ * /api/auth/test:
+ *   get:
+ *     summary: Test route (no auth required)
+ *     responses:
+ *       200:
+ *         description: Auth routes are working
+ */
 // @route   GET /api/auth/test
 // @desc    Test route (no auth required)
 router.get("/test", (req, res) => {

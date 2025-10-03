@@ -7,6 +7,9 @@ import transactionRoutes from "./routes/transactionRoutes.js";
 import categoryRoutes from "./routes/categoryRoutes.js";
 import accountRoutes from "./routes/accountRoutes.js";
 import aiRoutes from "./routes/aiRoutes.js";
+import swaggerUi from "swagger-ui-express";
+import swaggerJsdoc from "swagger-jsdoc";
+
 
 dotenv.config();
 
@@ -22,6 +25,23 @@ const allowedOrigins = [
   'http://localhost:5173', // Local development
   'https://ai-financial-dashboard.vercel.app' // Production frontend
 ];
+
+const swaggerOptions = {
+  definition: {
+    openapi: "3.0.0",
+    info: {
+      title: "AI Financial Dashboard API",
+      version: "1.0.0",
+      description: "API documentation for your financial dashboard",
+    },
+    servers: [
+      { url: "https://ai-financial-dashboard-api.vercel.app" }
+    ],
+  },
+  apis: ["./src/routes/*.js"], // Path to your route files
+};
+
+const swaggerSpec = swaggerJsdoc(swaggerOptions);
 
 app.use(cors({
   origin: function (origin, callback) {
@@ -41,6 +61,7 @@ app.use(express.json());
 
 // Routes
 
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 app.use("/api/auth", authRoutes);
 app.use("/api/transactions", transactionRoutes);
 app.use("/api/categories", categoryRoutes);
