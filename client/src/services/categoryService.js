@@ -1,23 +1,22 @@
-import axios from "axios";
-const API_URL = "http://localhost:3000/api/categories";
+import API from "../api";
 
 const getCategories = async () => {
-  const res = await axios.get(API_URL);
+  const res = await API.get("/categories");
   return res.data;
 };
 
 const addCategory = async (name) => {
-  const res = await axios.post(API_URL, { name });
+  const res = await API.post("/categories", { name });
   return res.data;
 };
 
 const updateCategory = async (id, name) => {
-  const res = await axios.put(`${API_URL}/${id}`, { name });
+  const res = await API.put(`/categories/${id}`, { name });
   return res.data;
 };
 
 const deleteCategory = async (id) => {
-  const res = await axios.delete(`${API_URL}/${id}`);
+  const res = await API.delete(`/categories/${id}`);
   return res.data;
 };
 

@@ -2,6 +2,7 @@ import React, { useState, useContext } from 'react';
 import { Clock, TestTube, RefreshCw } from 'lucide-react';
 import { AuthContext } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
+import API from '../api';
 
 const TokenTestingUtility = () => {
   const { user, login } = useContext(AuthContext);
@@ -12,25 +13,12 @@ const TokenTestingUtility = () => {
   const createShortLivedToken = async () => {
     setIsCreatingShortToken(true);
     try {
-      const response = await fetch('http://localhost:3000/api/auth/test-token', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${user?.token}`
-        },
-        body: JSON.stringify({ duration: '2m' }) // 2 minutes for testing
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        
-        // Update the context with the short-lived token
-        login(data);
-        success('Test token created! Will expire in 2 minutes.');
-        info('The notification will appear 15 minutes before expiry (immediately for this test token).');
-      } else {
-        throw new Error('Failed to create test token');
-      }
+      const response = await API.post('/auth/test-token', { duration: '2m' });
+      
+      // Update the context with the short-lived token
+      login(response.data);
+      success('Test token created! Will expire in 2 minutes.');
+      info('The notification will appear 15 minutes before expiry (immediately for this test token).');
     } catch (err) {
       console.error('Error creating test token:', err);
       error('Failed to create test token. Using manual token manipulation instead.');

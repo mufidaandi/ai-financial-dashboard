@@ -1,4 +1,4 @@
-import axios from "axios";
+import API from "../api";
 import { useState, useEffect } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "../components/ui/card";
 import { Button } from "../components/ui/button";
@@ -315,21 +315,11 @@ function Dashboard() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const userData = JSON.parse(localStorage.getItem("user"));
-        const token = userData?.token;
-        if (!token) throw new Error("No auth token found");
-
         // Fetch all data in parallel
         const [txRes, catRes, accRes] = await Promise.all([
-          axios.get("http://localhost:3000/api/transactions", {
-            headers: { Authorization: `Bearer ${token}` },
-          }),
-          axios.get("http://localhost:3000/api/categories", {
-            headers: { Authorization: `Bearer ${token}` },
-          }),
-          axios.get("http://localhost:3000/api/accounts", {
-            headers: { Authorization: `Bearer ${token}` },
-          })
+          API.get("/transactions"),
+          API.get("/categories"),
+          API.get("/accounts")
         ]);
 
         const txData = Array.isArray(txRes?.data) ? txRes.data : [];

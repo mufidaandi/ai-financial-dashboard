@@ -1,8 +1,6 @@
 // src/services/authService.js
-import axios from "axios";
+import API from "../api";
 import { isTokenExpired } from "../utils/authUtils";
-
-const API_URL = "http://localhost:3000/api/auth";
 
 const getStoredUser = () => {
   const stored = JSON.parse(localStorage.getItem("user"));
@@ -14,7 +12,7 @@ const getStoredUser = () => {
 };
 
 // Attach token automatically
-axios.interceptors.request.use((config) => {
+API.interceptors.request.use((config) => {
   const stored = getStoredUser();
   if (stored && stored.token) {
     config.headers.Authorization = `Bearer ${stored.token}`;
@@ -24,14 +22,14 @@ axios.interceptors.request.use((config) => {
 
 // Register
 const register = async (userData) => {
-  const res = await axios.post(`${API_URL}/register`, userData);
+  const res = await API.post("/auth/register", userData);
   if (res.data.token) localStorage.setItem("user", JSON.stringify(res.data));
   return res.data;
 };
 
 // Login
 const login = async (userData) => {
-  const res = await axios.post(`${API_URL}/login`, userData);
+  const res = await API.post("/auth/login", userData);
   if (res.data.token) localStorage.setItem("user", JSON.stringify(res.data));
   return res.data;
 };
