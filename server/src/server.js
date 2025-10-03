@@ -58,10 +58,15 @@ app.use(cors({
 }));
 
 app.use(express.json());
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
+  swaggerOptions: {
+    url: "/api-docs/swagger.json"
+  },
+  customCssUrl: "/api-docs/swagger-ui.css"
+}));
 
 // Routes
 
-app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 app.use("/api/auth", authRoutes);
 app.use("/api/transactions", transactionRoutes);
 app.use("/api/categories", categoryRoutes);
