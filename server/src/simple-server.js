@@ -1,10 +1,16 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
+import connectDB from "./config/db.js";
 
 dotenv.config();
 
 const app = express();
+
+// Initialize database connection (non-blocking)
+connectDB().catch(err => {
+  console.error('Database connection failed:', err.message);
+});
 
 // Configure CORS
 const allowedOrigins = [
@@ -39,6 +45,82 @@ app.get("/api/health", (req, res) => {
     timestamp: new Date().toISOString(),
     env: process.env.NODE_ENV 
   });
+});
+
+// Test database connection
+app.get("/api/test-db", async (req, res) => {
+  try {
+    const mongoose = await import('mongoose');
+    const isConnected = mongoose.default.connection.readyState === 1;
+    res.json({ 
+      success: true, 
+      database: isConnected ? 'Connected' : 'Not Connected',
+      mongoUri: process.env.MONGO_URI ? 'Set' : 'Not Set',
+      jwtSecret: process.env.JWT_SECRET ? 'Set' : 'Not Set'
+    });
+  } catch (error) {
+    res.status(500).json({ 
+      success: false, 
+      error: error.message,
+      mongoUri: process.env.MONGO_URI ? 'Set' : 'Not Set',
+      jwtSecret: process.env.JWT_SECRET ? 'Set' : 'Not Set'
+    });
+  }
+});
+
+// Simple auth test endpoint
+app.post("/api/auth/login", async (req, res) => {
+  try {
+    console.log('Login attempt:', req.body);
+    const { email, password } = req.body;
+    
+    if (!email || !password) {
+      return res.status(400).json({ message: "Email and password required" });
+    }
+    
+    // Import User model dynamically
+    const { default: User } = await import('./models/User.js');
+    
+    // Find user
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(400).json({ message: "Invalid credentials" });
+    }
+    
+    // Import bcrypt dynamically
+    const bcrypt = await import('bcryptjs');
+    
+    // Compare password
+    const isMatch = await bcrypt.default.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(400).json({ message: "Invalid credentials" });
+    }
+    
+    // Import jwt dynamically
+    const jwt = await import('jsonwebtoken');
+    
+    // Create JWT
+    const token = jwt.default.sign({ id: user._id }, process.env.JWT_SECRET, {
+      expiresIn: "1h",
+    });
+    
+    res.json({
+      token,
+      user: { 
+        id: user._id, 
+        name: user.name, 
+        email: user.email,
+        country: user.country,
+        currency: user.currency 
+      },
+    });
+  } catch (err) {
+    console.error('Login error:', err);
+    res.status(500).json({ 
+      message: "Server error logging in user",
+      error: process.env.NODE_ENV === 'development' ? err.message : undefined
+    });
+  }
 });
 
 // Basic error handler
