@@ -12,14 +12,10 @@ dotenv.config();
 
 const app = express();
 
-// Add error handling for database connection
-try {
-  await connectDB();
-  console.log('Database connection attempted');
-} catch (error) {
-  console.error('Database connection failed:', error.message);
-  // Don't exit in serverless environment, just log the error
-}
+// Initialize database connection without await at top level
+connectDB().catch(err => {
+  console.error('Database connection failed:', err.message);
+});
 
 // Configure CORS with specific options
 const allowedOrigins = [
