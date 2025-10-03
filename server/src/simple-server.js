@@ -34,6 +34,12 @@ app.use(cors({
 
 app.use(express.json());
 
+// Add request logging
+app.use((req, res, next) => {
+  console.log(`${req.method} ${req.path}`, req.body);
+  next();
+});
+
 // Simple test route
 app.get("/", (req, res) => {
   res.json({ message: "Express server is working!" });
@@ -43,7 +49,8 @@ app.get("/api/health", (req, res) => {
   res.json({ 
     status: "ok",
     timestamp: new Date().toISOString(),
-    env: process.env.NODE_ENV 
+    env: process.env.NODE_ENV,
+    version: "2.0"  // Adding version to check if deployment updated
   });
 });
 
@@ -127,6 +134,17 @@ app.post("/api/auth/login", async (req, res) => {
 app.use((error, req, res, next) => {
   console.error('Error:', error);
   res.status(500).json({ message: 'Internal server error' });
+});
+
+// Catch-all route for debugging
+app.use('*', (req, res) => {
+  console.log('Catch-all route hit:', req.method, req.originalUrl);
+  res.status(404).json({ 
+    message: 'Route not found',
+    method: req.method,
+    path: req.originalUrl,
+    timestamp: new Date().toISOString()
+  });
 });
 
 // Export for Vercel
