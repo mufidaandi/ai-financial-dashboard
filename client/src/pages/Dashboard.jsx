@@ -560,7 +560,7 @@ function Dashboard() {
                 <TableBody>
                   {filteredTransactions.slice(0, 5).map(tx => (
                     <TableRow key={tx._id}>
-                      <TableCell>{new Date(tx.date).toLocaleDateString()}</TableCell>
+                      <TableCell>{tx.date ? tx.date.split('T')[0] : ''}</TableCell>
                       <TableCell>{tx.description}</TableCell>
                       <TableCell>
                         {tx.type === "income" ? (
