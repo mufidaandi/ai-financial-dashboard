@@ -2,7 +2,7 @@
   "version": 2,
   "builds": [
     {
-      "src": "src/simple-server.js",
+      "src": "src/server.js",
       "use": "@vercel/node"
     },
     {
@@ -17,7 +17,7 @@
     },
     {
       "src": "/(.*)",
-      "dest": "src/simple-server.js"
+      "dest": "src/server.js"
     }
   ],
   "env": {

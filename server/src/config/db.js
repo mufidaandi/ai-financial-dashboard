@@ -8,9 +8,9 @@ const connectDB = async () => {
   } catch (error) {
     console.error(`Error: ${error.message}`);
     // Don't exit in serverless environment
-    if (process.env.NODE_ENV !== 'production') {
-      process.exit(1);
-    }
+    // if (process.env.NODE_ENV !== 'production') {
+    //   process.exit(1);
+    // }
     throw error;
   }
 };

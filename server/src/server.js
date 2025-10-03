@@ -25,9 +25,7 @@ const allowedOrigins = [
 
 app.use(cors({
   origin: function (origin, callback) {
-    // Allow requests with no origin (like mobile apps or curl requests)
     if (!origin) return callback(null, true);
-    
     if (allowedOrigins.includes(origin)) {
       return callback(null, true);
     } else {
@@ -58,48 +56,9 @@ app.use((error, req, res, next) => {
   });
 });
 
-// 404 handler
-app.use('*', (req, res) => {
-  res.status(404).json({ message: `Route ${req.originalUrl} not found` });
-});
-
 
 app.get("/", (req, res) => {
   res.send("Server is working!");
-});
-
-// Simple test endpoint without database
-app.get("/api/test", (req, res) => {
-  res.json({ 
-    message: "API is working!",
-    timestamp: new Date().toISOString(),
-    env: {
-      nodeEnv: process.env.NODE_ENV,
-      hasMongoUri: !!process.env.MONGO_URI,
-      hasJwtSecret: !!process.env.JWT_SECRET
-    }
-  });
-});
-
-// Test database connection endpoint
-app.get("/api/test-db", async (req, res) => {
-  try {
-    const mongoose = await import('mongoose');
-    const isConnected = mongoose.default.connection.readyState === 1;
-    res.json({ 
-      success: true, 
-      database: isConnected ? 'Connected' : 'Not Connected',
-      mongoUri: process.env.MONGO_URI ? 'Set' : 'Not Set',
-      jwtSecret: process.env.JWT_SECRET ? 'Set' : 'Not Set'
-    });
-  } catch (error) {
-    res.status(500).json({ 
-      success: false, 
-      error: error.message,
-      mongoUri: process.env.MONGO_URI ? 'Set' : 'Not Set',
-      jwtSecret: process.env.JWT_SECRET ? 'Set' : 'Not Set'
-    });
-  }
 });
 
 const PORT = process.env.PORT || 3000;
@@ -112,9 +71,7 @@ if (process.env.NODE_ENV !== 'production') {
 }
 
 // Export for Vercel serverless functions
-export default (req, res) => {
-  return app(req, res);
-};
+export default app;
 
 // const PORT = process.env.PORT || 5000;
 // app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
