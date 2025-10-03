@@ -86,7 +86,11 @@ router.post("/login", async (req, res) => {
       },
     });
   } catch (err) {
-    res.status(500).json({ message: "Server error logging in user" });
+    console.error('Login error:', err);
+    res.status(500).json({ 
+      message: "Server error logging in user",
+      error: process.env.NODE_ENV === 'development' ? err.message : undefined
+    });
   }
 });
 

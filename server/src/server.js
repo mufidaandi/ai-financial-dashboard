@@ -9,9 +9,17 @@ import accountRoutes from "./routes/accountRoutes.js";
 import aiRoutes from "./routes/aiRoutes.js";
 
 dotenv.config();
-connectDB();
 
 const app = express();
+
+// Add error handling for database connection
+try {
+  await connectDB();
+  console.log('Database connection attempted');
+} catch (error) {
+  console.error('Database connection failed:', error.message);
+  // Don't exit in serverless environment, just log the error
+}
 
 // Configure CORS with specific options
 const allowedOrigins = [
@@ -45,9 +53,36 @@ app.use("/api/categories", categoryRoutes);
 app.use("/api/accounts", accountRoutes);
 app.use("/api/ai", aiRoutes);
 
+// Global error handler
+app.use((error, req, res, next) => {
+  console.error('Global error handler:', error);
+  res.status(500).json({ 
+    message: 'Internal server error',
+    error: process.env.NODE_ENV === 'development' ? error.message : 'Something went wrong'
+  });
+});
+
+// 404 handler
+app.use('*', (req, res) => {
+  res.status(404).json({ message: `Route ${req.originalUrl} not found` });
+});
+
 
 app.get("/", (req, res) => {
   res.send("Server is working!");
+});
+
+// Simple test endpoint without database
+app.get("/api/test", (req, res) => {
+  res.json({ 
+    message: "API is working!",
+    timestamp: new Date().toISOString(),
+    env: {
+      nodeEnv: process.env.NODE_ENV,
+      hasMongoUri: !!process.env.MONGO_URI,
+      hasJwtSecret: !!process.env.JWT_SECRET
+    }
+  });
 });
 
 // Test database connection endpoint
