@@ -78,16 +78,5 @@ app.use((error, req, res, next) => {
   res.status(500).json({ message: 'Internal server error' });
 });
 
-// Catch-all route for debugging (use proper Express syntax)
-app.all('*', (req, res) => {
-  console.log('Catch-all route hit:', req.method, req.originalUrl);
-  res.status(404).json({ 
-    message: 'Route not found',
-    method: req.method,
-    path: req.originalUrl,
-    timestamp: new Date().toISOString()
-  });
-});
-
 // Export for Vercel
 export default app;
