@@ -248,6 +248,146 @@ node src/server.js   # Start the server
 - CORS configuration
 - Environment variable protection
 
+## 🚀 Deployment
+
+### Deploy to Vercel
+
+This project is optimized for deployment on Vercel with the following setup:
+
+#### **Backend Deployment:**
+
+1. **Set up MongoDB Atlas** (Production Database):
+   ```bash
+   # Sign up at https://cloud.mongodb.com/
+   # Create a new cluster
+   # Get your connection string
+   ```
+
+2. **Deploy Backend to Vercel:**
+   ```bash
+   # From your project root
+   cd server
+   vercel --prod
+   
+   # Or connect GitHub repo in Vercel dashboard
+   # Point to /server directory as root
+   ```
+
+3. **Configure Environment Variables** in Vercel Dashboard:
+   ```env
+   MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/financial-dashboard
+   JWT_SECRET=your-production-jwt-secret-here
+   GOOGLE_AI_API_KEY=your-google-ai-api-key
+   NODE_ENV=production
+   ```
+
+#### **Frontend Deployment:**
+
+1. **Update API URLs** in client:
+   ```javascript
+   // client/src/services/api.js
+   const API_BASE_URL = process.env.NODE_ENV === 'production' 
+     ? 'https://your-backend.vercel.app'
+     : 'http://localhost:3000';
+   ```
+
+2. **Deploy Frontend to Vercel:**
+   ```bash
+   # From your project root
+   cd client
+   vercel --prod
+   
+   # Or connect GitHub repo in Vercel dashboard
+   # Point to /client directory as root
+   ```
+
+3. **Configure Build Settings** in Vercel:
+   - **Framework Preset:** Vite
+   - **Build Command:** `npm run build`
+   - **Output Directory:** `dist`
+
+#### **Alternative: Deploy Both from Root**
+
+You can also deploy both frontend and backend from the root directory:
+
+1. **Create `vercel.json` in root:**
+   ```json
+   {
+     "version": 2,
+     "builds": [
+       {
+         "src": "client/package.json",
+         "use": "@vercel/static-build",
+         "config": {
+           "distDir": "client/dist"
+         }
+       },
+       {
+         "src": "server/src/server.js",
+         "use": "@vercel/node"
+       }
+     ],
+     "routes": [
+       {
+         "src": "/api/(.*)",
+         "dest": "server/src/server.js"
+       },
+       {
+         "src": "/(.*)",
+         "dest": "client/dist/$1"
+       }
+     ]
+   }
+   ```
+
+2. **Update package.json scripts in root:**
+   ```json
+   {
+     "scripts": {
+       "build": "cd client && npm run build",
+       "start": "cd server && npm start"
+     }
+   }
+   ```
+
+### **Quick Deployment Steps:**
+
+1. **Push to GitHub:**
+   ```bash
+   git add .
+   git commit -m "feat: add vercel deployment configuration"
+   git push origin main
+   ```
+
+2. **Connect to Vercel:**
+   - Go to [vercel.com](https://vercel.com)
+   - Import your GitHub repository
+   - Configure environment variables
+   - Deploy!
+
+3. **Update CORS in server** for production:
+   ```javascript
+   const allowedOrigins = [
+     'http://localhost:5173',
+     'https://your-frontend.vercel.app'
+   ];
+   ```
+
+### **Environment Variables Needed:**
+
+#### Backend (.env):
+```env
+MONGODB_URI=mongodb+srv://...
+JWT_SECRET=your-production-secret
+GOOGLE_AI_API_KEY=your-api-key
+NODE_ENV=production
+```
+
+#### Frontend (.env):
+```env
+VITE_API_URL=https://your-backend.vercel.app
+```
+
 ## 🎯 Future Enhancements
 
 - [ ] Budget creation and tracking
