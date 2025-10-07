@@ -40,6 +40,7 @@ function Login() {
           <CardDescription className="text-center text-gray-400 dark:text-gray-300 mb-4 text-sm">Enter your email and password to access your dashboard.</CardDescription>
         </CardHeader>
         <CardContent>
+        <div className="text-sm text-gray-400 dark:text-gray-300 text-center mb-4">Test credentials: admin@test.com / admin</div>
           <form onSubmit={handleSubmit} className="space-y-3">
             <Label htmlFor="email" className="text-m text-white dark:text-gray-200">Email</Label>
             <Input
