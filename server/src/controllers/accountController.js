@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import Account from "../models/Account.js";
 import Transaction from "../models/Transaction.js";
 
@@ -18,6 +19,12 @@ export const addAccount = async (req, res) => {
     
     if (!name || !type) {
       return res.status(400).json({ message: "Name and type are required" });
+    }
+    
+    // Check if account name already exists for this user
+    const existingAccount = await Account.findOne({ name, user: req.user._id });
+    if (existingAccount) {
+      return res.status(400).json({ message: "Account name already exists" });
     }
     
     const accountData = { name, type, user: req.user._id };
@@ -84,6 +91,16 @@ export const updateAccount = async (req, res) => {
     
     if (!name || !type) {
       return res.status(400).json({ message: "Name and type are required" });
+    }
+    
+    // Check if account name already exists for this user (excluding current account)
+    const existingAccount = await Account.findOne({ 
+      name, 
+      user: req.user._id, 
+      _id: { $ne: req.params.id } 
+    });
+    if (existingAccount) {
+      return res.status(400).json({ message: "Account name already exists" });
     }
     
     const updateData = { name, type };
@@ -170,6 +187,46 @@ export const deleteAccount = async (req, res) => {
     res.json({ message: "Account deleted" });
   } catch (err) {
     res.status(500).json({ message: "Server error deleting account" });
+  }
+};
+
+// Fix database indexes - removes any conflicting simple unique index on name field
+export const fixAccountIndexes = async (req, res) => {
+  try {
+    const Account = mongoose.model('Account');
+    
+    // Get current indexes
+    const indexes = await Account.collection.getIndexes();
+    console.log("Current indexes:", Object.keys(indexes));
+    
+    // Check if there's a simple unique index on name field
+    const hasSimpleNameIndex = Object.keys(indexes).some(indexName => 
+      indexes[indexName].length === 1 && 
+      indexes[indexName][0][0] === 'name' &&
+      indexName !== '_id_'
+    );
+    
+    if (hasSimpleNameIndex) {
+      // Drop the problematic simple name index
+      try {
+        await Account.collection.dropIndex({ name: 1 });
+        console.log("Dropped simple name index");
+      } catch (err) {
+        console.log("No simple name index to drop or already dropped");
+      }
+    }
+    
+    // Ensure the compound index exists
+    await Account.collection.createIndex({ name: 1, user: 1 }, { unique: true });
+    console.log("Ensured compound index exists");
+    
+    res.json({ 
+      message: "Account indexes fixed successfully",
+      currentIndexes: Object.keys(await Account.collection.getIndexes())
+    });
+  } catch (err) {
+    console.error("Error fixing account indexes:", err);
+    res.status(500).json({ message: "Server error fixing indexes" });
   }
 };
 
