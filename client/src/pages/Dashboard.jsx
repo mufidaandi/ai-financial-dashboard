@@ -11,6 +11,7 @@ import { getSpendingInsights } from "../services/aiService";
 import budgetService from "../services/budgetService";
 import { Link } from "react-router-dom";
 import { useSettings } from "../context/SettingsContext";
+import { useOnboarding } from "../context/OnboardingContext";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableBadge } from "../components/ui/table";
 import { CategoryPill, TypePill } from "../components/ui/pill";
 
@@ -436,7 +437,7 @@ function Dashboard() {
   };
 
   return (
-    <div className="p-4 sm:p-6">
+    <div className="p-4 sm:p-6" data-tour="dashboard-overview">
       {/* Page Header with Month Filter */}
       <div className="">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
@@ -526,7 +527,7 @@ function Dashboard() {
       </Modal>
 
       {/* Income & Expenses Overview */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6" data-tour="financial-metrics">
         <Card className="h-full">
           <CardHeader className="pb-3">
             <CardTitle className="text-base">Total Available</CardTitle>
@@ -555,7 +556,7 @@ function Dashboard() {
 
       {/* Budget Overview */}
       {budgetSummary && budgetSummary.totalBudgets > 0 && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6" data-tour="budget-cards">
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-base flex items-center gap-2">
@@ -670,7 +671,7 @@ function Dashboard() {
       <div className={`grid gap-4 sm:gap-6 mb-6 ${(reminders.length > 0 || budgetAlerts.length > 0) ? 'grid-cols-1 lg:grid-cols-3' : 'grid-cols-1'}`}>
         {/* Recent Transactions Table - Full width when no reminders, 2/3 width when reminders exist */}
         <div className={`${(reminders.length > 0 || budgetAlerts.length > 0) ? 'lg:col-span-2' : 'col-span-1'}`}>
-          <Card>
+          <Card data-tour="recent-transactions">
             <CardHeader>
               <CardTitle>Recent Transactions</CardTitle>
             </CardHeader>
@@ -873,7 +874,7 @@ function Dashboard() {
       {/* AI Recommendations */}
       <div className="mb-6">
         {(insights?.aiRecommendations?.length > 0 || insightsLoading) && (
-          <Card>
+          <Card data-tour="ai-insights">
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2 text-base">
                 <Brain className="h-4 w-4 text-blue-500" />
@@ -948,7 +949,7 @@ function Dashboard() {
       {/* Spending and Budget Overview */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-6">
         {/* Spending by Category Chart */}
-        <Card>
+        <Card data-tour="spending-chart">
           <CardHeader>
             <CardTitle>Spending by Category</CardTitle>
           </CardHeader>

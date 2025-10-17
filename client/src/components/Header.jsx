@@ -1,10 +1,12 @@
 import React, { useState, useContext } from "react";
 import { Link } from "react-router-dom";
-import { Sun, Moon, Bell, Settings, LogOut, ChevronDown, User } from "lucide-react";
+import { Sun, Moon, Bell, Settings, LogOut, ChevronDown, User, HelpCircle } from "lucide-react";
 import { AuthContext } from "../context/AuthContext";
+import { useOnboarding } from "../context/OnboardingContext";
 
 function Header({ theme, onThemeToggle }) {
   const { user, logout } = useContext(AuthContext);
+  const { restartOnboarding } = useOnboarding();
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
   
   // Get user data from AuthContext - handle nested structure
@@ -48,6 +50,15 @@ function Header({ theme, onThemeToggle }) {
             title="Notifications (coming soon)"
           >
             <Bell size={20} />
+          </button>
+
+          {/* Help/Tutorial Button */}
+          <button
+            onClick={restartOnboarding}
+            className="p-2 rounded-lg text-gray-500 dark:bg-gray-800 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
+            title="Restart Tutorial"
+          >
+            <HelpCircle size={20} />
           </button>
 
           {/* User Dropdown */}

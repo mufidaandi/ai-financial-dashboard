@@ -4,6 +4,7 @@ import budgetService from "../services/budgetService";
 import categoryService from "../services/categoryService";
 import { useToast } from "../context/ToastContext";
 import { useSettings } from "../context/SettingsContext";
+import { useOnboarding } from "../context/OnboardingContext";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Select } from "../components/ui/select";
@@ -15,6 +16,7 @@ import { CategoryPill } from "../components/ui/pill";
 function Budgets() {
     const { success, error } = useToast();
     const { formatCurrency } = useSettings();
+    const { markMilestone } = useOnboarding();
     const [budgets, setBudgets] = useState([]);
     const [budgetProgress, setBudgetProgress] = useState([]);
     const [categories, setCategories] = useState([]);
@@ -130,6 +132,12 @@ function Budgets() {
                 // Create new budget
                 await budgetService.addBudget(payload);
                 success("Budget created successfully!");
+                
+                // Mark milestone: user has created their first budget
+                if (budgets.length === 0) {
+                    await markMilestone('hasCreatedBudget');
+                    console.log('First budget milestone marked');
+                }
             }
             
             setEditId(null);
@@ -276,7 +284,7 @@ function Budgets() {
             {/* Categories with Budget Management */}
             {categories.length === 0 ? (
                 <Card>
-                    <CardContent className="flex flex-col items-center justify-center py-12">
+                    <CardContent className="flex flex-col items-center justify-center py-12 pt-4">
                         <Target className="h-12 w-12 text-gray-300 dark:text-gray-600 mb-4" />
                         <p className="text-gray-500 dark:text-gray-400 text-lg mb-2">No categories found</p>
                         <p className="text-gray-400 dark:text-gray-500 text-sm mb-6">You need to create categories before setting up budgets</p>
@@ -398,6 +406,7 @@ function Budgets() {
                                                             variant="outline" 
                                                             size="sm"
                                                             className="flex items-center gap-1"
+                                                            data-tour="add-budget"
                                                         >
                                                             <Plus size={14} />
                                                             Add Budget
@@ -409,12 +418,12 @@ function Budgets() {
                                         
                                         <CardContent className="pt-0">
                                             {existingBudget ? (
-                                                <div className="space-y-4">
+                                                <div className="space-y-4" data-tour="budget-progress">
                                                     {/* Budget Amount and Status */}
                                                     <div className="flex items-center justify-between">
                                                         <span className="text-sm text-gray-600 dark:text-gray-400">Budget</span>
                                                         <div className="flex items-center gap-2">
-                                                            <span className={`text-sm flex items-center gap-1 ${getStatusColor(existingBudget.status)}`}>
+                                                            <span className={`text-sm flex items-center gap-1 ${getStatusColor(existingBudget.status)}`} data-tour="budget-status">
                                                                 {getStatusIcon(existingBudget.status)}
                                                                 {existingBudget.status.replace('-', ' ')}
                                                             </span>

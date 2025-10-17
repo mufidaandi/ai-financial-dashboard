@@ -6,6 +6,7 @@ import accountService from "../services/accountService";
 import { suggestCategory } from "../services/aiService";
 import { useToast } from "../context/ToastContext";
 import { useSettings } from "../context/SettingsContext";
+import { useOnboarding } from "../context/OnboardingContext";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Select } from "../components/ui/select";
@@ -18,6 +19,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
 function Transactions() {
     const { success, error } = useToast();
     const { formatCurrency } = useSettings();
+    const { markMilestone } = useOnboarding();
     const [transactions, setTransactions] = useState([]);
     const [categories, setCategories] = useState([]);
     const [accounts, setAccounts] = useState([]);
@@ -417,6 +419,13 @@ function Transactions() {
             console.log("payload", payload);
             await transactionService.addTransaction(payload);
             success("Transaction added successfully!");
+            
+            // Mark milestone: user has added their first transaction
+            if (transactions.length === 0) {
+                await markMilestone('hasAddedTransaction');
+                console.log('First transaction milestone marked');
+            }
+            
             setForm({ type: "expense", amount: "", category: "", description: "", account: "", fromAccount: "", toAccount: "", date: getToday() });
             closeModal();
             fetchAll();
@@ -551,7 +560,7 @@ function Transactions() {
                         <Filter className="h-4 w-4" />
                         {showFilters ? 'Hide Filters' : 'Show Filters'}
                     </Button>
-                    <Button onClick={() => setShowModal(true)} className="dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-blue-300">
+                    <Button onClick={() => setShowModal(true)} className="dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-blue-300" data-tour="add-transaction">
                         Add Transaction
                     </Button>
                 </div>
@@ -559,7 +568,7 @@ function Transactions() {
 
             {/* Filter Section */}
             {showFilters && (
-                <Card className="mb-6">
+                <Card className="mb-6" data-tour="transaction-filters">
                     <CardHeader className="pb-4">
                         <CardTitle className="text-lg">Filter Transactions</CardTitle>
                     </CardHeader>
@@ -864,7 +873,7 @@ function Transactions() {
                 </Card>
             ) : (
                 <>
-                <div className="overflow-x-auto">
+                <div className="overflow-x-auto" data-tour="transaction-table">
                     <DataTable
                         data={getPaginatedTransactions(transactions)}
                         allowOverflow={editId !== null}

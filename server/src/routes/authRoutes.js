@@ -28,6 +28,15 @@ router.post("/register", async (req, res) => {
       name,
       email,
       password: hashedPassword,
+      onboarding: {
+        hasSeenOnboarding: false,
+        completedTours: [],
+        hasCompletedInitialSetup: false,
+        hasAddedTransaction: false,
+        hasCreatedBudget: false,
+        onboardingVersion: "1.0",
+        lastOnboardingUpdate: new Date()
+      }
     });
 
     await user.save();
@@ -231,14 +240,160 @@ router.post("/forgot-password", async (req, res) => {
   }
 });
 
-// @route   GET /api/auth/test
-// @desc    Test route (no auth required)
-router.get("/test", (req, res) => {
-  res.json({ 
-    message: "Auth routes are working!",
-    timestamp: new Date().toISOString(),
-    jwtSecretExists: !!process.env.JWT_SECRET
-  });
+// @route   GET /api/auth/onboarding
+// @desc    Get user's onboarding state
+router.get("/onboarding", protect, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).select('onboarding');
+    
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.json({
+      onboarding: user.onboarding || {
+        hasSeenOnboarding: false,
+        completedTours: [],
+        hasCompletedInitialSetup: false,
+        hasAddedTransaction: false,
+        hasCreatedBudget: false,
+        onboardingVersion: "1.0"
+      }
+    });
+  } catch (err) {
+    console.error("Get onboarding state error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+// @route   PUT /api/auth/onboarding
+// @desc    Update user's onboarding state
+router.put("/onboarding", protect, async (req, res) => {
+  try {
+    const { 
+      hasSeenOnboarding, 
+      completedTours, 
+      hasCompletedInitialSetup,
+      hasAddedTransaction,
+      hasCreatedBudget 
+    } = req.body;
+
+    const updateData = {
+      'onboarding.lastOnboardingUpdate': new Date()
+    };
+
+    // Only update fields that are provided
+    if (hasSeenOnboarding !== undefined) {
+      updateData['onboarding.hasSeenOnboarding'] = hasSeenOnboarding;
+    }
+    if (completedTours !== undefined) {
+      updateData['onboarding.completedTours'] = completedTours;
+    }
+    if (hasCompletedInitialSetup !== undefined) {
+      updateData['onboarding.hasCompletedInitialSetup'] = hasCompletedInitialSetup;
+    }
+    if (hasAddedTransaction !== undefined) {
+      updateData['onboarding.hasAddedTransaction'] = hasAddedTransaction;
+    }
+    if (hasCreatedBudget !== undefined) {
+      updateData['onboarding.hasCreatedBudget'] = hasCreatedBudget;
+    }
+
+    const user = await User.findByIdAndUpdate(
+      req.user.id,
+      { $set: updateData },
+      { new: true, upsert: false }
+    ).select('onboarding');
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.json({
+      message: "Onboarding state updated successfully",
+      onboarding: user.onboarding
+    });
+  } catch (err) {
+    console.error("Update onboarding state error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+// @route   POST /api/auth/onboarding/complete-tour
+// @desc    Mark a specific tour as completed
+router.post("/onboarding/complete-tour", protect, async (req, res) => {
+  try {
+    const { tourId } = req.body;
+
+    if (!tourId) {
+      return res.status(400).json({ message: "Tour ID is required" });
+    }
+
+    const user = await User.findById(req.user.id);
+    
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Initialize onboarding if it doesn't exist
+    if (!user.onboarding) {
+      user.onboarding = {
+        hasSeenOnboarding: false,
+        completedTours: [],
+        hasCompletedInitialSetup: false,
+        hasAddedTransaction: false,
+        hasCreatedBudget: false,
+        onboardingVersion: "1.0"
+      };
+    }
+
+    // Add tour to completed tours if not already there
+    if (!user.onboarding.completedTours.includes(tourId)) {
+      user.onboarding.completedTours.push(tourId);
+    }
+
+    user.onboarding.lastOnboardingUpdate = new Date();
+    await user.save();
+
+    res.json({
+      message: `Tour ${tourId} marked as completed`,
+      onboarding: user.onboarding
+    });
+  } catch (err) {
+    console.error("Complete tour error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+// @route   POST /api/auth/onboarding/reset
+// @desc    Reset user's onboarding state
+router.post("/onboarding/reset", protect, async (req, res) => {
+  try {
+    const user = await User.findByIdAndUpdate(
+      req.user.id,
+      {
+        $set: {
+          'onboarding.hasSeenOnboarding': false,
+          'onboarding.completedTours': [],
+          'onboarding.hasCompletedInitialSetup': false,
+          'onboarding.lastOnboardingUpdate': new Date()
+        }
+      },
+      { new: true }
+    ).select('onboarding');
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.json({
+      message: "Onboarding state reset successfully",
+      onboarding: user.onboarding
+    });
+  } catch (error) {
+    console.error("Reset onboarding error:", error);
+    res.status(500).json({ message: "Server error" });
+  }
 });
 
 export default router;

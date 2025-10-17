@@ -119,7 +119,7 @@ function Categories() {
     <div className="p-6">
         <div className="flex justify-between items-center mb-4">
           <h1 className="text-2xl font-bold mb-4 dark:text-gray-100">Categories</h1>
-  <Button onClick={() => setShowModal(true)} className="dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-blue-300">
+  <Button onClick={() => setShowModal(true)} className="dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-blue-300" data-tour="add-category">
           Add Category
         </Button>
       </div>

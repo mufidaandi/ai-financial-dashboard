@@ -1,7 +1,8 @@
 import React, { useState, useContext } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Menu, BarChart2, Wallet, CreditCard, Tag, Sun, Moon, ChevronLeft, ChevronRight, Brain, Target, LogOut, User, Settings } from "lucide-react";
+import { Menu, BarChart2, Wallet, CreditCard, Tag, Sun, Moon, ChevronLeft, ChevronRight, Brain, Target, LogOut, User, Settings, HelpCircle } from "lucide-react";
 import { AuthContext } from "../context/AuthContext";
+import { useOnboarding } from "../context/OnboardingContext";
 import Header from "./Header";
 
 const navigation = [
@@ -15,6 +16,7 @@ const navigation = [
 
 function Sidebar({ children }) {
   const { user, logout } = useContext(AuthContext);
+  const { restartOnboarding } = useOnboarding();
   const [theme, setTheme] = useState(() => localStorage.getItem("theme") || "light");
   // Theme toggle handler
   const handleThemeToggle = () => {
@@ -102,6 +104,13 @@ function Sidebar({ children }) {
                   key={item.name}
                   to={item.href}
                   onClick={() => setSidebarOpen(false)}
+                  data-tour={
+                    item.name === "Accounts" ? "accounts-nav" :
+                    item.name === "Categories" ? "categories-nav" :
+                    item.name === "Budgets" ? "budgets-nav" :
+                    item.name === "Transactions" ? "transactions-nav" :
+                    undefined
+                  }
                   className={`flex items-center py-3 rounded-lg transition-colors ${collapsed ? "justify-center" : "px-4"
                     } ${isActive
                       ? "bg-blue-50 dark:bg-blue-900 text-blue-700 dark:text-blue-300 border-r-2 border-blue-700 dark:border-blue-300"
@@ -147,6 +156,20 @@ function Sidebar({ children }) {
               </span>
               <span className="ml-3 text-sm font-medium">Profile Settings</span>
             </Link>
+
+            {/* Help Button - mobile only */}
+            <button
+              onClick={() => {
+                restartOnboarding();
+                setSidebarOpen(false);
+              }}
+              className="flex items-center w-full py-2 px-3 mb-2 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white transition-colors"
+            >
+              <span className="text-lg flex items-center justify-center">
+                <HelpCircle size={20} />
+              </span>
+              <span className="ml-3 text-sm font-medium">Tutorial</span>
+            </button>
 
             {/* Logout Button - mobile only */}
             <button

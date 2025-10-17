@@ -13,10 +13,13 @@ import Budgets from "./pages/Budgets";
 import Settings from "./pages/Settings";
 import Insights from "./pages/Insights";
 import Profile from "./pages/Profile";
+import { OnboardingProvider } from "./context/OnboardingContext";
+import TourTooltip from "./components/ui/TourTooltip";
+import WelcomeModal from "./components/ui/WelcomeModal";
 
 function App() {
   return (
-    <>
+    <OnboardingProvider>
       <Routes>
         {/* Public routes */}
         <Route path="/" element={<Login />} />
@@ -116,7 +119,11 @@ function App() {
         
 
       </Routes>
-    </>
+      
+      {/* Onboarding components */}
+      <WelcomeModal />
+      <TourTooltip />
+    </OnboardingProvider>
   );
 }
 

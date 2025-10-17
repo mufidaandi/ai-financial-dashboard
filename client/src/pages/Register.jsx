@@ -24,6 +24,7 @@ function Register() {
         email,
         password,
       });
+      
       // Use AuthContext login function to update both context and localStorage
       login(res.data);
       navigate("/dashboard");

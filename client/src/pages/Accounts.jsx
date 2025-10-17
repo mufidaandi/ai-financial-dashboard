@@ -510,7 +510,7 @@ function Accounts() {
           <Button onClick={() => setShowTransferModal(true)} variant="outline" className="dark:border-gray-700">
             Transfer
           </Button>
-          <Button onClick={() => setShowModal(true)} className="dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-blue-300">
+          <Button onClick={() => setShowModal(true)} className="dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-blue-300" data-tour="add-account">
             Add Account
           </Button>
         </div>
