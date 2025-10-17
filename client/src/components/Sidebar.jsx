@@ -79,7 +79,7 @@ function Sidebar({ children }) {
                 <img
                   src={collapsed ? "/logo-icon.png" : `${theme === "light" ? "/light-mode.png" : "/dark-mode.png"}`}
                   alt="Logo"
-                  className={`transition-all duration-200 ${collapsed ? "w-15 h-15 mx-auto" : "h-10 visible"}`}
+                  className={`transition-all duration-200 ${collapsed ? "w-15 h-15 mx-auto" : "p-4 visible"}`}
                 />
               </div>
               {/* <h1 className={`text-xl font-bold text-gray-800 dark:text-gray-100 transition-all duration-200 ${collapsed ? "hidden" : "visible"}`}>ExpenSure</h1> */}
