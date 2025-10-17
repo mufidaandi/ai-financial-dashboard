@@ -9,9 +9,11 @@ A comprehensive personal finance management application with AI-powered insights
 ### 🏠 **Dashboard Overview**
 - Real-time financial metrics (Total Available, Expenses, Balance)
 - Interactive spending breakdown with pie charts
-- Recent transactions overview
+- Recent transactions overview with adaptive layout
+- **Budget Progress Cards** with visual progress indicators
 - AI-powered financial recommendations
 - Payment reminders for credit cards
+- **Fully mobile responsive** with adaptive grid layouts
 
 ### 💳 **Transaction Management**
 - Add, edit, and delete transactions (Income, Expense, Transfer)
@@ -19,8 +21,19 @@ A comprehensive personal finance management application with AI-powered insights
 - Advanced filtering and search capabilities
 - Bulk operations and inline editing
 - Monthly/custom date range filtering
+- **Mobile-optimized table** with horizontal scrolling
+- **Responsive design** for all screen sizes
 
-### 🏦 **Account Management**
+### � **Budget Management**
+- **Create and manage budgets** by category and time period
+- **Real-time budget tracking** with automatic spending calculations
+- **Visual progress indicators** with color-coded status
+- **Smart status system**: On Track → Warning → Alert → At Limit → Over Budget
+- **Monthly and custom period** budget cycles
+- **Budget progress cards** integrated into dashboard
+- **Mobile-responsive** budget management interface
+
+### �🏦 **Account Management**
 - Support for multiple account types (Checking, Savings, Credit Card, Investment)
 - Automatic balance updates based on transactions
 - Credit card payment due date tracking
@@ -30,18 +43,40 @@ A comprehensive personal finance management application with AI-powered insights
 - Customizable expense categories
 - AI-suggested categories for new transactions
 - Spending pattern analysis
+- **Enhanced AI Insights** with comprehensive financial analysis
 - Monthly/yearly financial insights
+- **Mobile-responsive insights** with adaptive charts
+
+### 👤 **User Profile & Authentication**
+- **Complete profile management** with name and email updates
+- **Secure password change** functionality
+- **Forgot password feature** with direct reset (no email required)
+- **Mobile-accessible profile settings** via sidebar
+- JWT-based secure authentication
+- Separate desktop header and mobile sidebar user interfaces
 
 ### 🤖 **AI-Powered Features**
 - Automatic transaction categorization
-- Personalized financial recommendations
+- **Comprehensive spending insights** with financial health scoring
+- **Smart recommendations** based on spending patterns
 - Spending behavior analysis
 - Budget optimization suggestions
+- **Enhanced AI analysis** with priority-based recommendations
+
+### 📱 **Mobile Experience**
+- **Fully responsive design** across all devices
+- **Mobile-first approach** with touch-friendly interfaces
+- **Adaptive layouts** that stack vertically on mobile
+- **Horizontal table scrolling** for data-heavy views
+- **Mobile-optimized sidebar** with user profile access
+- **Responsive typography** that scales with screen size
+- **Touch-friendly buttons** and form elements
 
 ### ⚙️ **Settings & Customization**
 - Currency formatting preferences
-- Dark/light theme support
-- User profile management
+- **Dark/light theme support** with toggle in header/sidebar
+- **Comprehensive user profile management**
+- **Password reset functionality**
 - Secure authentication with JWT
 
 ## 🛠️ Tech Stack
@@ -50,7 +85,7 @@ A comprehensive personal finance management application with AI-powered insights
 - **React 19.1.1** - Modern UI framework
 - **Vite** - Fast build tool and development server
 - **Tailwind CSS** - Utility-first CSS framework
-- **Radix UI** - Accessible component primitives
+- **shadcn/ui** - Beautiful components library built on Radix UI
 - **Lucide React** - Beautiful icons
 - **Recharts** - Interactive charts and graphs
 - **React Router** - Client-side routing
@@ -150,7 +185,14 @@ ai-financial-dashboard/
 │   │   │   └── ui/         # Design system components
 │   │   ├── context/        # React context providers
 │   │   ├── pages/          # Application pages/routes
+│   │   │   ├── Dashboard.jsx    # Main dashboard with budget cards
+│   │   │   ├── Transactions.jsx # Transaction management
+│   │   │   ├── Budgets.jsx      # Budget management
+│   │   │   ├── Profile.jsx      # User profile settings
+│   │   │   ├── ForgotPassword.jsx # Password reset
+│   │   │   └── Insights.jsx     # AI insights
 │   │   ├── services/       # API service layers
+│   │   │   └── budgetService.js # Budget API calls
 │   │   └── utils/          # Utility functions
 │   ├── public/             # Static assets
 │   └── package.json
@@ -158,9 +200,15 @@ ai-financial-dashboard/
 │   ├── src/
 │   │   ├── config/         # Database configuration
 │   │   ├── controllers/    # Route controllers
+│   │   │   ├── budgetController.js # Budget management logic
+│   │   │   └── aiController.js     # AI insights logic
 │   │   ├── middleware/     # Custom middleware
 │   │   ├── models/         # MongoDB schemas
+│   │   │   ├── Budget.js   # Budget model with progress virtuals
+│   │   │   └── User.js     # User model
 │   │   ├── routes/         # API routes
+│   │   │   ├── budgetRoutes.js # Budget API endpoints
+│   │   │   └── authRoutes.js   # Auth & profile endpoints
 │   │   └── utils/          # Server utilities
 │   └── package.json
 └── package.json           # Root package configuration
@@ -191,12 +239,22 @@ node src/server.js   # Start the server
 ### Authentication
 - `POST /api/auth/register` - User registration
 - `POST /api/auth/login` - User login
+- `POST /api/auth/forgot-password` - Reset password
+- `PUT /api/auth/profile` - Update user profile
+- `PUT /api/auth/password` - Change user password
 
 ### Transactions
 - `GET /api/transactions` - Get all transactions
 - `POST /api/transactions` - Create new transaction
 - `PUT /api/transactions/:id` - Update transaction
 - `DELETE /api/transactions/:id` - Delete transaction
+
+### Budgets
+- `GET /api/budgets` - Get all budgets with progress tracking
+- `POST /api/budgets` - Create new budget
+- `PUT /api/budgets/:id` - Update budget
+- `DELETE /api/budgets/:id` - Delete budget
+- `GET /api/budgets/progress` - Get budget progress for dashboard
 
 ### Categories
 - `GET /api/categories` - Get all categories
@@ -212,14 +270,47 @@ node src/server.js   # Start the server
 
 ### AI Features
 - `POST /api/ai/suggest-category` - Get AI category suggestion
-- `POST /api/ai/insights` - Get spending insights
+- `GET /api/ai/insights` - Get comprehensive spending insights and recommendations
 
 ## 🎨 Key Features in Detail
+
+### **Budget Management System**
+- **Smart Budget Creation**: Set budgets by category
+- **Real-time Progress Tracking**: Automatic calculation of spent amounts from transactions
+- **Intelligent Status System**: 
+  - 🟢 On Track (< 50% spent)
+  - 🟡 Warning (50-75% spent)  
+  - 🟠 Alert (75-99% spent)
+  - 🔵 At Limit (exactly 100% spent)
+  - 🔴 Over Budget (> 100% spent)
+- **Dashboard Integration**: Budget progress cards with visual indicators
+- **Mobile Responsive**: Optimized for all screen sizes
+
+### **Enhanced Mobile Experience**
+- **Responsive Design**: Mobile-first approach with breakpoints (sm, md, lg)
+- **Adaptive Layouts**: Content stacks vertically on mobile, arranges horizontally on desktop
+- **Touch-Friendly Interface**: Proper button sizes and spacing for mobile interaction
+- **Mobile Sidebar**: Profile settings and logout accessible on mobile
+- **Desktop Header**: Clean user dropdown with profile access on desktop
+- **Horizontal Scrolling**: Tables scroll horizontally on mobile for data-heavy views
+
+### **User Profile & Security**
+- **Complete Profile Management**: Update name, email, and account information
+- **Secure Password Management**: Change password with current password verification
+- **Forgot Password Feature**: Direct password reset (email + new password form)
+- **JWT Authentication**: Secure token-based authentication system
+- **Dual Interface**: Mobile sidebar profile vs desktop header dropdown
 
 ### **AI-Powered Transaction Categorization**
 - Automatically suggests categories when you enter transaction descriptions
 - Learns from your past categorization patterns
 - Supports confidence levels (high, medium, low)
+
+### **Enhanced AI Insights**
+- **Financial Health Scoring**: Comprehensive analysis of spending patterns
+- **Smart Recommendations**: Priority-based suggestions (high, medium, low)
+- **Spending Analysis**: Detailed breakdown of financial behavior
+- **Mobile Optimized**: Responsive charts and layouts for all devices
 
 ### **Smart Payment Reminders**
 - Tracks credit card due dates
@@ -390,20 +481,24 @@ VITE_API_URL=https://your-backend.vercel.app
 
 ## 🎯 Future Enhancements
 
-- [ ] Budget creation and tracking
-- [ ] Expense forecasting
+- [ ] Email notifications for budget alerts
+- [ ] Expense forecasting and predictions
 - [ ] Multi-currency support
-- [ ] Bank account integration
-- [ ] Mobile app development
+- [ ] Bank account integration (Plaid/Open Banking)
+- [ ] Mobile app development (React Native)
 - [ ] Advanced reporting and analytics
 - [ ] Goal setting and tracking
 - [ ] Receipt image upload and processing
+- [ ] Investment portfolio tracking
+- [ ] Bill reminder automation
+- [ ] Subscription tracking and management
+- [ ] Tax category suggestions and reports
 
 
 ## 🙏 Acknowledgments
 
 - [Google Gemini AI](https://ai.google.dev/) for powering the AI features
-- [Radix UI](https://www.radix-ui.com/) for accessible components
+- [shadcn/ui](https://ui.shadcn.com/) for beautiful and accessible components
 - [Tailwind CSS](https://tailwindcss.com/) for styling
 - [Lucide](https://lucide.dev/) for beautiful icons
 - [Recharts](https://recharts.org/) for data visualization
