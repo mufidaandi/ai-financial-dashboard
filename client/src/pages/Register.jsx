@@ -34,7 +34,7 @@ function Register() {
   };
 
   return (
-  <div className="min-h-screen flex items-center justify-center bg-white dark:bg-gray-900">
+  <div className="min-h-screen flex items-center justify-center bg-white dark:bg-gray-900 p-4">
   <Card className="w-full max-w-md bg-neutral-800 text-white dark:bg-gray-800 dark:text-gray-100">
         <CardHeader className="border-none flex align-center flex-col w-2/3 mx-auto pt-6">
           <CardTitle className="text-center">Create your account</CardTitle>

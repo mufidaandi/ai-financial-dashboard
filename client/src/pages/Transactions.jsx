@@ -527,10 +527,10 @@ function Transactions() {
     };
 
     return (
-        <div className="p-6">
-            <div className="flex justify-between items-center mb-6">
-                <h1 className="text-2xl font-bold dark:text-gray-100">Transactions</h1>
-                <div className="flex gap-3 items-center">
+        <div className="p-4 sm:p-6">
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-6 gap-4">
+                <h1 className="text-xl sm:text-2xl font-bold dark:text-gray-100">Transactions</h1>
+                <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 items-stretch sm:items-center">
                     {/* Search Field */}
                     <div className="relative">
                         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
@@ -539,7 +539,7 @@ function Transactions() {
                             placeholder="Search transactions"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            className="pl-10 w-64"
+                            className="pl-10 w-full sm:w-64"
                         />
                     </div>
                     
@@ -564,7 +564,7 @@ function Transactions() {
                         <CardTitle className="text-lg">Filter Transactions</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
                         {/* Month Filter */}
                         <div>
                             <label className="block text-sm font-medium mb-2 dark:text-gray-100">Month</label>
@@ -864,9 +864,10 @@ function Transactions() {
                 </Card>
             ) : (
                 <>
-                <DataTable
-                    data={getPaginatedTransactions(transactions)}
-                    allowOverflow={editId !== null}
+                <div className="overflow-x-auto">
+                    <DataTable
+                        data={getPaginatedTransactions(transactions)}
+                        allowOverflow={editId !== null}
                     columns={[
                         {
                             key: 'date',
@@ -1020,6 +1021,7 @@ function Transactions() {
                     }}
                     emptyMessage="No transactions found."
                 />
+                </div>
                 </>
             )}
             {/* Delete Confirmation Modal */}

@@ -6,8 +6,9 @@ import { Input } from "../components/ui/input";
 import { Modal } from "../components/ui/modal";
 import { CustomSelect, CustomSelectItem } from "../components/ui/custom-select";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from "recharts";
-import { Calendar, Filter, CalendarRange, Brain, TrendingUp, ArrowRight, Bell, CreditCard, AlertTriangle, CheckCircle } from "lucide-react";
+import { Calendar, Filter, CalendarRange, Brain, TrendingUp, ArrowRight, Bell, CreditCard, AlertTriangle, CheckCircle, Target, DollarSign } from "lucide-react";
 import { getSpendingInsights } from "../services/aiService";
+import budgetService from "../services/budgetService";
 import { Link } from "react-router-dom";
 import { useSettings } from "../context/SettingsContext";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableBadge } from "../components/ui/table";
@@ -40,6 +41,9 @@ function Dashboard() {
     const stored = localStorage.getItem('dismissedReminders');
     return stored ? JSON.parse(stored) : {};
   });
+  const [budgetSummary, setBudgetSummary] = useState(null);
+  const [budgetProgress, setBudgetProgress] = useState([]);
+  const [budgetAlerts, setBudgetAlerts] = useState([]);
 
   // Helper function to filter transactions with fallback to previous month
   const filterTransactionsWithFallback = (txData, targetMonth, allowFallback = true) => {
@@ -316,10 +320,12 @@ function Dashboard() {
     const fetchData = async () => {
       try {
         // Fetch all data in parallel
-        const [txRes, catRes, accRes] = await Promise.all([
+        const [txRes, catRes, accRes, budgetSummaryRes, budgetProgressRes] = await Promise.all([
           API.get("/transactions"),
           API.get("/categories"),
-          API.get("/accounts")
+          API.get("/accounts"),
+          budgetService.getBudgetSummary(),
+          budgetService.getBudgetProgress()
         ]);
 
         const txData = Array.isArray(txRes?.data) ? txRes.data : [];
@@ -329,6 +335,14 @@ function Dashboard() {
         setTransactions(txData);
         setCategories(catData);
         setAccounts(accData);
+        setBudgetSummary(budgetSummaryRes || null);
+        setBudgetProgress(Array.isArray(budgetProgressRes) ? budgetProgressRes : []);
+
+        // Generate budget alerts from budget progress
+        const alerts = budgetProgressRes.filter(bp => 
+          bp.status === 'warning' || bp.status === 'over-budget'
+        ).slice(0, 3); // Show top 3 alerts
+        setBudgetAlerts(alerts);
 
         // Generate reminders from account data
         const accountReminders = generateReminders(accData);
@@ -422,14 +436,14 @@ function Dashboard() {
   };
 
   return (
-    <div className="p-6">
+    <div className="p-4 sm:p-6">
       {/* Page Header with Month Filter */}
       <div className="">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
           <div>
-            <h1 className="text-2xl font-bold mb-2 dark:text-gray-100">Dashboard</h1>
+            <h1 className="text-xl sm:text-2xl font-bold mb-2 dark:text-gray-100">Dashboard</h1>
             <div className="flex items-center gap-2">
-              <p className="text-muted-foreground dark:text-gray-400">Welcome back! Here's your financial overview.</p>
+              <p className="text-sm sm:text-base text-muted-foreground dark:text-gray-400">Welcome back! Here's your financial overview.</p>
               {showingPreviousMonth && (
                 <div className="flex items-center gap-1 px-2 py-1 bg-blue-100 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 text-xs rounded-md border border-blue-200 dark:border-blue-800">
                   <ArrowRight className="h-3 w-3 rotate-180" />
@@ -446,7 +460,7 @@ function Dashboard() {
               value={getFilterDisplayValue()}
               onValueChange={handleFilterChange}
               placeholder="Select Month"
-              className="min-w-[180px]"
+              className="min-w-[140px] sm:min-w-[180px]"
             >
               {generateMonthOptions().map(option => (
                 <CustomSelectItem key={option.value} value={option.value}>
@@ -460,7 +474,7 @@ function Dashboard() {
 
       {/* Custom Date Range Modal */}
       <Modal open={showCustomRangeModal} onClose={handleModalClose}>
-        <div className="p-2">
+        <div className="p-4 sm:p-6">
           <div className="flex items-center gap-2 mb-6">
             <CalendarRange className="h-5 w-5" />
             <h2 className="text-xl font-semibold dark:text-gray-100">Select Custom Date Range</h2>
@@ -512,7 +526,7 @@ function Dashboard() {
       </Modal>
 
       {/* Income & Expenses Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
         <Card className="h-full">
           <CardHeader className="pb-3">
             <CardTitle className="text-base">Total Available</CardTitle>
@@ -539,16 +553,130 @@ function Dashboard() {
         </Card>
       </div>
 
+      {/* Budget Overview */}
+      {budgetSummary && budgetSummary.totalBudgets > 0 && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base flex items-center gap-2">
+                <Target className="h-4 w-4 text-blue-500" />
+                Total Budgets
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="pt-2">
+              <p className="text-2xl font-semibold text-blue-600 dark:text-blue-400">
+                {budgetSummary.totalBudgets}
+              </p>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base flex items-center gap-2">
+                <DollarSign className="h-4 w-4 text-green-500" />
+                Budgeted
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="pt-2">
+              <p className="text-2xl font-semibold text-green-600 dark:text-green-400">
+                {formatCurrency(budgetSummary.totalBudgeted)}
+              </p>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base flex items-center gap-2">
+                <TrendingUp className="h-4 w-4 text-orange-500" />
+                Spent
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="pt-2">
+              <p className="text-2xl font-semibold text-orange-600 dark:text-orange-400">
+                {formatCurrency(budgetSummary.totalSpent)}
+              </p>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                {budgetSummary.overallPercentage}% of budget
+              </p>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base">
+                Budget Status
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="pt-2">
+              <div className="space-y-2">
+                {budgetProgress.length > 0 ? (
+                  <>
+                    {/* Count budgets by status */}
+                    {(() => {
+                      const statusCounts = budgetProgress.reduce((acc, bp) => {
+                        acc[bp.status] = (acc[bp.status] || 0) + 1;
+                        return acc;
+                      }, {});
+
+                      return (
+                        <>
+                          {statusCounts['over-budget'] > 0 && (
+                            <div className="flex items-center gap-2 text-red-600 dark:text-red-400">
+                              <AlertTriangle className="h-4 w-4" />
+                              <span className="text-sm">{statusCounts['over-budget']} over budget</span>
+                            </div>
+                          )}
+                          {statusCounts['at-limit'] > 0 && (
+                            <div className="flex items-center gap-2 text-orange-600 dark:text-orange-400">
+                              <Target className="h-4 w-4" />
+                              <span className="text-sm">{statusCounts['at-limit']} at limit</span>
+                            </div>
+                          )}
+                          {statusCounts['warning'] > 0 && (
+                            <div className="flex items-center gap-2 text-yellow-600 dark:text-yellow-400">
+                              <AlertTriangle className="h-4 w-4" />
+                              <span className="text-sm">{statusCounts['warning']} near limit</span>
+                            </div>
+                          )}
+                          {statusCounts['on-track'] > 0 && (
+                            <div className="flex items-center gap-2 text-green-600 dark:text-green-400">
+                              <CheckCircle className="h-4 w-4" />
+                              <span className="text-sm">{statusCounts['on-track']} on track</span>
+                            </div>
+                          )}
+                          {Object.keys(statusCounts).length === 0 && (
+                            <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400">
+                              <Target className="h-4 w-4" />
+                              <span className="text-sm">No active budgets</span>
+                            </div>
+                          )}
+                        </>
+                      );
+                    })()}
+                  </>
+                ) : (
+                  <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400">
+                    <Target className="h-4 w-4" />
+                    <span className="text-sm">No budgets created yet</span>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
       {/* Recent Transactions and Payment Reminders */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-        {/* Recent Transactions Table - 2/3 width */}
-        <div className="lg:col-span-2">
+      <div className={`grid gap-4 sm:gap-6 mb-6 ${(reminders.length > 0 || budgetAlerts.length > 0) ? 'grid-cols-1 lg:grid-cols-3' : 'grid-cols-1'}`}>
+        {/* Recent Transactions Table - Full width when no reminders, 2/3 width when reminders exist */}
+        <div className={`${(reminders.length > 0 || budgetAlerts.length > 0) ? 'lg:col-span-2' : 'col-span-1'}`}>
           <Card>
             <CardHeader>
               <CardTitle>Recent Transactions</CardTitle>
             </CardHeader>
             <CardContent>
-              <Table className="text-sm">
+              <div className="overflow-x-auto">
+                <Table className="text-xs sm:text-sm min-w-full">
                 <TableHeader>
                   <TableRow>
                     <TableHead>Date</TableHead>
@@ -590,87 +718,155 @@ function Dashboard() {
                   )}
                 </TableBody>
               </Table>
+              </div>
             </CardContent>
           </Card>
         </div>
 
-        {/* Payment Reminders - 1/3 width */}
-        {reminders.length > 0 && (
-          <div className="lg:col-span-1">
-            <Card className="h-full">
-              <CardHeader className="pb-3">
-                <CardTitle className="flex items-center gap-2 text-base">
-                  <Bell className="h-4 w-4 text-orange-500" />
-                  Payment Reminders
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="pt-0">
-                <div className="space-y-3">
-                  {reminders.slice(0, 3).map((reminder) => (
-                    <div
-                      key={reminder.id}
-                      className={`p-3 rounded-lg border-l-4 ${reminder.priority === 'high' ? 'border-red-500 bg-red-50 dark:bg-red-900/10' :
-                        reminder.priority === 'medium' ? 'border-yellow-500 bg-yellow-50 dark:bg-yellow-900/10' :
-                          'border-blue-500 bg-blue-50 dark:bg-blue-900/10'
+        {/* Payment Reminders and Budget Alerts */}
+        {(reminders.length > 0 || budgetAlerts.length > 0) && (
+          <div className="lg:col-span-1 space-y-4">
+            {/* Payment Reminders */}
+            {reminders.length > 0 && (
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="flex items-center gap-2 text-base">
+                    <Bell className="h-4 w-4 text-orange-500" />
+                    Payment Reminders
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="pt-0">
+                  <div className="space-y-3">
+                    {reminders.slice(0, 2).map((reminder) => (
+                      <div
+                        key={reminder.id}
+                        className={`p-3 rounded-lg border-l-4 ${reminder.priority === 'high' ? 'border-red-500 bg-red-50 dark:bg-red-900/10' :
+                          reminder.priority === 'medium' ? 'border-yellow-500 bg-yellow-50 dark:bg-yellow-900/10' :
+                            'border-blue-500 bg-blue-50 dark:bg-blue-900/10'
+                          }`}
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex items-start gap-2 flex-1 min-w-0">
+                            <div className={`p-1.5 rounded-full ${reminder.priority === 'high' ? 'bg-red-100 dark:bg-red-900/20' :
+                              reminder.priority === 'medium' ? 'bg-yellow-100 dark:bg-yellow-900/20' :
+                                'bg-blue-100 dark:bg-blue-900/20'
+                              }`}>
+                              {reminder.type === 'due' && <CreditCard className="h-3 w-3 text-red-600 dark:text-red-400" />}
+                              {reminder.type === 'statement' && <Calendar className="h-3 w-3 text-blue-600 dark:text-blue-400" />}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <h4 className="font-medium text-sm text-gray-900 dark:text-gray-100 mb-1 truncate">
+                                {reminder.accountName}
+                              </h4>
+                              <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">
+                                {reminder.description}
+                              </p>
+                              <div className="flex items-center gap-1 flex-wrap">
+                                <span className={`text-xs px-1.5 py-0.5 rounded-full ${reminder.priority === 'high' ? 'bg-red-100 dark:bg-red-900/20 text-red-700 dark:text-red-300' :
+                                  reminder.priority === 'medium' ? 'bg-yellow-100 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-300' :
+                                    'bg-blue-100 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300'
+                                  }`}>
+                                  {reminder.priority}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                          <Button
+                            onClick={() => handleDismissReminder(reminder)}
+                            variant="outline"
+                            size="sm"
+                            className="flex items-center gap-1 text-xs px-2 py-1 h-6 shrink-0"
+                          >
+                            <CheckCircle className="h-3 w-3" />
+                            Paid
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                    {reminders.length > 2 && (
+                      <div className="text-center">
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                          +{reminders.length - 2} more reminder{reminders.length - 2 !== 1 ? 's' : ''}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Budget Alerts */}
+            {budgetAlerts.length > 0 && (
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="flex items-center gap-2 text-base">
+                    <Target className="h-4 w-4 text-red-500" />
+                    Budget Alerts
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="pt-0">
+                  <div className="space-y-3">
+                    {budgetAlerts.map((alert) => (
+                      <div
+                        key={alert.budget._id}
+                        className={`p-3 rounded-lg border-l-4 ${
+                          alert.status === 'over-budget' 
+                            ? 'border-red-500 bg-red-50 dark:bg-red-900/10' 
+                            : 'border-yellow-500 bg-yellow-50 dark:bg-yellow-900/10'
                         }`}
-                    >
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="flex items-start gap-2 flex-1 min-w-0">
-                          <div className={`p-1.5 rounded-full ${reminder.priority === 'high' ? 'bg-red-100 dark:bg-red-900/20' :
-                            reminder.priority === 'medium' ? 'bg-yellow-100 dark:bg-yellow-900/20' :
-                              'bg-blue-100 dark:bg-blue-900/20'
-                            }`}>
-                            {reminder.type === 'due' && <CreditCard className="h-3 w-3 text-red-600 dark:text-red-400" />}
-                            {reminder.type === 'statement' && <Calendar className="h-3 w-3 text-blue-600 dark:text-blue-400" />}
+                      >
+                        <div className="flex items-start gap-2">
+                          <div className={`p-1.5 rounded-full ${
+                            alert.status === 'over-budget' 
+                              ? 'bg-red-100 dark:bg-red-900/20' 
+                              : 'bg-yellow-100 dark:bg-yellow-900/20'
+                          }`}>
+                            <AlertTriangle className={`h-3 w-3 ${
+                              alert.status === 'over-budget' 
+                                ? 'text-red-600 dark:text-red-400' 
+                                : 'text-yellow-600 dark:text-yellow-400'
+                            }`} />
                           </div>
                           <div className="flex-1 min-w-0">
-                            <h4 className="font-medium text-sm text-gray-900 dark:text-gray-100 mb-1 truncate">
-                              {reminder.accountName}
+                            <h4 className="font-medium text-sm text-gray-900 dark:text-gray-100 mb-1">
+                              {alert.budget.name}
                             </h4>
                             <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">
-                              {reminder.description}
+                              {formatCurrency(alert.totalSpent)} of {formatCurrency(alert.budget.amount)} spent
                             </p>
-                            <div className="flex items-center gap-1 flex-wrap">
-                              <span className={`text-xs px-1.5 py-0.5 rounded-full ${reminder.priority === 'high' ? 'bg-red-100 dark:bg-red-900/20 text-red-700 dark:text-red-300' :
-                                reminder.priority === 'medium' ? 'bg-yellow-100 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-300' :
-                                  'bg-blue-100 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300'
-                                }`}>
-                                {reminder.priority}
+                            <div className="flex items-center gap-2">
+                              <div className="flex-1 bg-gray-200 dark:bg-gray-700 rounded-full h-1.5">
+                                <div 
+                                  className={`h-1.5 rounded-full ${
+                                    alert.status === 'over-budget' ? 'bg-red-500' : 'bg-yellow-500'
+                                  }`}
+                                  style={{ width: `${Math.min(alert.percentageSpent, 100)}%` }}
+                                ></div>
+                              </div>
+                              <span className={`text-xs font-medium ${
+                                alert.status === 'over-budget' 
+                                  ? 'text-red-600 dark:text-red-400' 
+                                  : 'text-yellow-600 dark:text-yellow-400'
+                              }`}>
+                                {alert.percentageSpent.toFixed(0)}%
                               </span>
                             </div>
                           </div>
                         </div>
-                        <Button
-                          onClick={() => handleDismissReminder(reminder)}
-                          variant="outline"
-                          size="sm"
-                          className="flex items-center gap-1 text-xs px-2 py-1 h-6 shrink-0"
-                        >
-                          <CheckCircle className="h-3 w-3" />
-                          Paid
-                        </Button>
                       </div>
-                    </div>
-                  ))}
-                  {reminders.length > 3 && (
+                    ))}
                     <div className="text-center">
-                      <p className="text-xs text-gray-500 dark:text-gray-400">
-                        +{reminders.length - 3} more reminder{reminders.length - 3 !== 1 ? 's' : ''}
-                      </p>
+                      <Link to="/budgets" className="text-xs text-blue-600 dark:text-blue-400 hover:underline">
+                        View all budgets →
+                      </Link>
                     </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
           </div>
         )}
 
-        {/* Empty space when no reminders */}
-        {reminders.length === 0 && (
-          <div className="lg:col-span-1">
-            {/* This maintains the layout even when no reminders */}
-          </div>
-        )}
       </div>
 
 
@@ -691,7 +887,7 @@ function Dashboard() {
                   <span className="ml-3 text-gray-600 dark:text-gray-400">Generating insights...</span>
                 </div>
               ) : insights?.aiRecommendations?.length > 0 ? (
-                <div className="grid gap-3 md:grid-cols-3">
+                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                   {insights.aiRecommendations.slice(0, 3).map((rec, index) => (
                     <div
                       key={index}
@@ -749,8 +945,9 @@ function Dashboard() {
         )}
       </div>
 
-      {/* Spending by Category - Full Width */}
-      <div className="mb-6">
+      {/* Spending and Budget Overview */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-6">
+        {/* Spending by Category Chart */}
         <Card>
           <CardHeader>
             <CardTitle>Spending by Category</CardTitle>
@@ -784,7 +981,6 @@ function Dashboard() {
                     />
                     <Legend
                       verticalAlign="bottom"
-                      height={36}
                       formatter={(value) => {
                         // Show full name in legend, truncate if too long
                         return value.length > 15 ? value.substring(0, 15) + '...' : value;
@@ -796,6 +992,111 @@ function Dashboard() {
             ) : (
               <div className="h-64 flex items-center justify-center">
                 <p className="text-gray-400">No spending data yet.</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Budget Progress by Category */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Target className="h-5 w-5 text-blue-500" />
+              Budget Progress
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {budgetProgress.length > 0 ? (
+              <div className="space-y-4 max-h-80 overflow-y-auto">
+                {budgetProgress.map((bp) => {
+                  const getStatusColor = (status) => {
+                    switch (status) {
+                      case 'on-track':
+                        return 'text-green-600 dark:text-green-400';
+                      case 'warning':
+                        return 'text-yellow-600 dark:text-yellow-400';
+                      case 'at-limit':
+                        return 'text-orange-600 dark:text-orange-400';
+                      case 'over-budget':
+                        return 'text-red-600 dark:text-red-400';
+                      default:
+                        return 'text-gray-600 dark:text-gray-400';
+                    }
+                  };
+
+                  const getProgressBarColor = (status) => {
+                    switch (status) {
+                      case 'on-track':
+                        return 'bg-green-500';
+                      case 'warning':
+                        return 'bg-yellow-500';
+                      case 'at-limit':
+                        return 'bg-orange-500';
+                      case 'over-budget':
+                        return 'bg-red-500';
+                      default:
+                        return 'bg-blue-500';
+                    }
+                  };
+
+                  return (
+                    <div key={bp.budget._id} className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium text-sm text-gray-900 dark:text-gray-100">
+                            {bp.budget.category.name}
+                          </span>
+                          <span className={`text-xs capitalize ${getStatusColor(bp.status)}`}>
+                            {bp.status.replace('-', ' ')}
+                          </span>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                            {formatCurrency(bp.totalSpent)}
+                          </div>
+                          <div className="text-xs text-gray-500 dark:text-gray-400">
+                            of {formatCurrency(bp.budget.amount)}
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center gap-2">
+                        <div className="flex-1 bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                          <div 
+                            className={`h-2 rounded-full transition-all duration-300 ${getProgressBarColor(bp.status)}`}
+                            style={{ width: `${Math.min(bp.percentageSpent, 100)}%` }}
+                          ></div>
+                        </div>
+                        <span className={`text-xs font-medium min-w-[3rem] text-right ${getStatusColor(bp.status)}`}>
+                          {bp.percentageSpent.toFixed(0)}%
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
+                
+                {budgetProgress.length > 0 && (
+                  <div className="pt-2 border-t border-gray-200 dark:border-gray-700">
+                    <Link 
+                      to="/budgets" 
+                      className="text-sm text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1"
+                    >
+                      View all budgets
+                      <ArrowRight className="h-3 w-3" />
+                    </Link>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="h-64 flex flex-col items-center justify-center">
+                <Target className="h-12 w-12 text-gray-300 dark:text-gray-600 mb-3" />
+                <p className="text-gray-400 mb-2">No budgets created yet</p>
+                <Link 
+                  to="/budgets" 
+                  className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
+                >
+                  Create your first budget →
+                </Link>
               </div>
             )}
           </CardContent>

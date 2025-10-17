@@ -8,8 +8,10 @@ import Sidebar from "./components/Sidebar";
 import Categories from "./pages/Categories";
 import Accounts from "./pages/Accounts";
 import Transactions from "./pages/Transactions";
+import Budgets from "./pages/Budgets";
 import Settings from "./pages/Settings";
 import Insights from "./pages/Insights";
+import Profile from "./pages/Profile";
 
 function App() {
   return (
@@ -67,6 +69,17 @@ function App() {
         />
 
         <Route
+          path="/budgets"
+          element={
+            <PrivateRoute>
+              <Sidebar>
+                <Budgets />
+              </Sidebar>
+            </PrivateRoute>
+          }
+        />
+
+        <Route
           path="/settings"
           element={
             <PrivateRoute>
@@ -83,6 +96,17 @@ function App() {
             <PrivateRoute>
               <Sidebar>
                 <Insights />
+              </Sidebar>
+            </PrivateRoute>
+          }
+        />
+
+        <Route
+          path="/profile"
+          element={
+            <PrivateRoute>
+              <Sidebar>
+                <Profile />
               </Sidebar>
             </PrivateRoute>
           }

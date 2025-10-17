@@ -1,6 +1,6 @@
 import React, { useState, useContext } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Menu, BarChart2, Wallet, CreditCard, Tag, Sun, Moon, ChevronLeft, ChevronRight, Brain } from "lucide-react";
+import { Menu, BarChart2, Wallet, CreditCard, Tag, Sun, Moon, ChevronLeft, ChevronRight, Brain, Target, LogOut, User, Settings } from "lucide-react";
 import { AuthContext } from "../context/AuthContext";
 import Header from "./Header";
 
@@ -9,6 +9,7 @@ const navigation = [
   { name: "Transactions", href: "/transactions", icon: <Wallet size={20} /> },
   { name: "Accounts", href: "/accounts", icon: <CreditCard size={20} /> },
   { name: "Categories", href: "/categories", icon: <Tag size={20} /> },
+  { name: "Budgets", href: "/budgets", icon: <Target size={20} /> },
   { name: "AI Insights", href: "/insights", icon: <Brain size={20} /> },
 ];
 
@@ -55,10 +56,10 @@ function Sidebar({ children }) {
         />
       )}
 
-      {/* Collapse button positioned on the border */}
+      {/* Collapse button positioned on the border - hidden on mobile */}
       <button
         onClick={() => setCollapsed((c) => !c)}
-        className={`p-0 fixed top-6 z-[60] bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-300 hover:text-gray-700 dark:hover:text-white items-center justify-center w-8 h-8 rounded-full border border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500 shadow-lg flex ${
+        className={`p-0 fixed top-6 z-[60] bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-300 hover:text-gray-700 dark:hover:text-white items-center justify-center w-8 h-8 rounded-full border border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500 shadow-lg hidden md:flex ${
           collapsed ? "left-[63px]" : "left-[240px]"
         }`}
         title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
@@ -113,6 +114,54 @@ function Sidebar({ children }) {
               );
             })}
           </nav>
+
+          {/* Mobile-only Profile and Settings section */}
+          <div className={`md:hidden border-t border-gray-200 dark:border-gray-700 p-4`}>
+            {/* Profile Info */}
+            <div className="flex items-center mb-3">
+              <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white font-medium text-sm">
+                {userInitial}
+              </div>
+              <div className="ml-3 flex-1 min-w-0">
+                <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                  {userName}
+                </p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                  {userEmail}
+                </p>
+              </div>
+            </div>
+            
+            {/* Profile Settings Link - mobile only */}
+            <Link
+              to="/profile"
+              onClick={() => setSidebarOpen(false)}
+              className={`flex items-center py-2 px-3 mb-2 rounded-lg transition-colors ${
+                location.pathname === "/profile"
+                  ? "bg-blue-50 dark:bg-blue-900 text-blue-700 dark:text-blue-300"
+                  : "text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white"
+              }`}
+            >
+              <span className="text-lg flex items-center justify-center">
+                <Settings size={20} />
+              </span>
+              <span className="ml-3 text-sm font-medium">Profile Settings</span>
+            </Link>
+
+            {/* Logout Button - mobile only */}
+            <button
+              onClick={() => {
+                logout();
+                setSidebarOpen(false);
+              }}
+              className="flex items-center w-full py-2 px-3 rounded-lg text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-700 dark:hover:text-red-300 transition-colors"
+            >
+              <span className="text-lg flex items-center justify-center">
+                <LogOut size={20} />
+              </span>
+              <span className="ml-3 text-sm font-medium">Logout</span>
+            </button>
+          </div>
         </div>
       </div>
 

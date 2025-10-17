@@ -7,6 +7,7 @@ import transactionRoutes from "./routes/transactionRoutes.js";
 import categoryRoutes from "./routes/categoryRoutes.js";
 import accountRoutes from "./routes/accountRoutes.js";
 import aiRoutes from "./routes/aiRoutes.js";
+import budgetRoutes from "./routes/budgetRoutes.js";
 
 
 dotenv.config();
@@ -47,6 +48,7 @@ app.use("/api/transactions", transactionRoutes);
 app.use("/api/categories", categoryRoutes);
 app.use("/api/accounts", accountRoutes);
 app.use("/api/ai", aiRoutes);
+app.use("/api/budgets", budgetRoutes);
 
 // Global error handler
 app.use((error, req, res, next) => {
