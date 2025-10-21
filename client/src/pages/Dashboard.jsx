@@ -23,6 +23,8 @@ function Dashboard() {
   const [accounts, setAccounts] = useState([]);
   const [income, setIncome] = useState(0);
   const [expenses, setExpenses] = useState(0);
+  const [periodIncome, setPeriodIncome] = useState(0);
+  const [periodExpenses, setPeriodExpenses] = useState(0);
   const [categorySpending, setCategorySpending] = useState([]);
   const [insights, setInsights] = useState(null);
   const [insightsLoading, setInsightsLoading] = useState(false);
@@ -358,7 +360,7 @@ function Dashboard() {
         setShowingPreviousMonth(filterResult.showingPrevious);
         setFilteredTransactions(filteredTransactions);
 
-        // Calculate income/expenses using the type field for filtered data
+        // Calculate income/expenses using the type field for filtered data (period-specific)
         let incomeSum = 0, expenseSum = 0;
         const catMap = {};
         let uncategorizedAmount = 0;
@@ -367,22 +369,23 @@ function Dashboard() {
           if (typeof tx.amount !== "number") return;
 
           if (tx.type === "income") {
-            incomeSum += tx.amount;
+            incomeSum += tx.amount; // Ensure income is positive
           } else if (tx.type === "expense") {
-            expenseSum += tx.amount;
+            const expenseAmount = tx.amount; // Ensure expense is positive
+            expenseSum += expenseAmount;
             // Track category spending for expenses
             if (tx.category) {
               const category = catData.find(cat => cat._id === tx.category);
               const categoryName = category?.name || "Unknown Category";
-              catMap[categoryName] = (catMap[categoryName] || 0) + tx.amount;
+              catMap[categoryName] = (catMap[categoryName] || 0) + expenseAmount;
             } else {
               // Include uncategorized transactions
-              uncategorizedAmount += tx.amount;
+              uncategorizedAmount += expenseAmount;
             }
           }
         });
 
-        // Add current account balances to income (Savings and Checking accounts only)
+        // Calculate current account balances (actual available money)
         let accountBalanceSum = 0;
         accData.forEach(account => {
           if ((account.type === "Savings" || account.type === "Checking") && typeof account.balance === "number") {
@@ -390,15 +393,18 @@ function Dashboard() {
           }
         });
 
-        // Total income includes transaction income + account balances
-        const totalIncome = incomeSum + accountBalanceSum;
-
         // Add uncategorized amount to the category map if it exists
         if (uncategorizedAmount > 0) {
           catMap["Uncategorized"] = uncategorizedAmount;
         }
-        setIncome(totalIncome);
-        setExpenses(expenseSum);
+        
+        // Set the correct values:
+        // - Total Available: Current account balances (what you actually have)
+        // - Period Income/Expenses: Transaction income/expenses for the selected period
+        setIncome(accountBalanceSum);  // Total Available = account balances
+        setExpenses(expenseSum);       // Period expenses
+        setPeriodIncome(incomeSum);    // Period income for balance calculation
+        setPeriodExpenses(expenseSum); // Period expenses for balance calculation
         setCategorySpending(Object.entries(catMap));
 
         // Fetch AI insights after transaction data is loaded
@@ -526,30 +532,40 @@ function Dashboard() {
         </div>
       </Modal>
 
-      {/* Income & Expenses Overview */}
+      {/* Financial Overview */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6" data-tour="financial-metrics">
-        <Card className="h-full">
+        <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-base">Total Available</CardTitle>
+            <CardTitle className="text-base">Period Income</CardTitle>
           </CardHeader>
           <CardContent className="pt-2">
-            <p className="text-3xl font-semibold text-green-600 dark:text-green-400">{formatCurrency(income)}</p>
+            <p className="text-3xl font-semibold text-green-600 dark:text-green-400">{formatCurrency(periodIncome)}</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Income for selected period</p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-base">Expenses</CardTitle>
+            <CardTitle className="text-base">Period Expenses</CardTitle>
           </CardHeader>
           <CardContent className="pt-2">
             <p className="text-3xl font-semibold text-red-600 dark:text-red-400">{formatCurrency(expenses)}</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Expenses for selected period</p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-base">Balance</CardTitle>
+            <CardTitle className="text-base">Net Change</CardTitle>
           </CardHeader>
           <CardContent className="pt-2">
-            <p className="text-3xl font-semibold dark:text-gray-100">{formatCurrency(income - expenses)}</p>
+            <p className={`text-3xl font-semibold ${periodIncome + expenses >= 0 
+              ? 'text-green-600 dark:text-green-400' 
+              : 'text-red-600 dark:text-red-400'
+            }`}>
+              {periodIncome + expenses >= 0 ? '+' : ''}{formatCurrency(periodIncome + expenses)}
+            </p>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+              {periodIncome - expenses >= 0 ? 'Positive cash flow' : 'Negative cash flow'}
+            </p>
           </CardContent>
         </Card>
       </div>
