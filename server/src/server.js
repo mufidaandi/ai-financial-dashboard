@@ -22,7 +22,8 @@ connectDB().catch(err => {
 // Configure CORS with specific options
 const allowedOrigins = [
   'http://localhost:5173', // Local development
-  'https://ai-financial-dashboard.vercel.app' // Production frontend
+  'https://expensure.vercel.app/', // Production frontend
+  'https://ai-financial-dashboard.vercel.app'
 ];
 
 app.use(cors({
