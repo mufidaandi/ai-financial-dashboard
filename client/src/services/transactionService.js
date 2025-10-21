@@ -9,7 +9,6 @@ const getTransactions = async () => {
 
 // Add new transaction
 const addTransaction = async (data) => {
-  console.log("Adding transaction with data:", data);
   const res = await API.post("/transactions", data);
   return res.data;
 };

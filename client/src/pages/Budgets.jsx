@@ -136,7 +136,6 @@ function Budgets() {
                 // Mark milestone: user has created their first budget
                 if (budgets.length === 0) {
                     await markMilestone('hasCreatedBudget');
-                    console.log('First budget milestone marked');
                 }
             }
             

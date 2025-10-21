@@ -1,17 +1,8 @@
 import API from "../api.js";
 
 const updateProfile = async (profileData) => {
-  try {
-    console.log("Sending profile data:", profileData);
-    const res = await API.put("/auth/profile", profileData);
-    console.log("Received response:", res);
-    console.log("Response data:", res.data);
+    const res = await API.put('/auth/profile', profileData);
     return res.data;
-  } catch (error) {
-    console.error("API Error:", error);
-    console.error("Error response:", error.response);
-    throw error;
-  }
 };
 
 const changePassword = async (passwordData) => {

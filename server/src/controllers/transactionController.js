@@ -69,7 +69,7 @@ const reverseTransactionFromBalances = async (transaction) => {
 // Create new transaction
 export const createTransaction = async (req, res) => {
   try {
-  const { amount, category, account, fromAccount, toAccount, date, description, type } = req.body;
+    const { amount, category, account, fromAccount, toAccount, date, description, type } = req.body;
     
     // Basic type validation
     if (!type || !["income", "expense", "transfer"].includes(type)) {
@@ -94,35 +94,80 @@ export const createTransaction = async (req, res) => {
       if (fromAccount === toAccount) {
         return res.status(400).json({ message: `${type} transactions cannot have the same fromAccount and toAccount` });
       }
-      // Account field will be set to toAccount for transfers
     }
     
-    // Set categories for income and transfer automatically, ignore user input
-    let finalCategory = category;
-    if (type === 'income') {
-      finalCategory = await getOrCreateDefaultCategory(req.user._id, 'Income');
-    } else if (type === 'transfer') {
-      finalCategory = await getOrCreateDefaultCategory(req.user._id, 'Transfer');
+    if (type === 'transfer') {
+      // For transfers, create two separate transactions
+      const transferId = `transfer_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+      const transferCategory = await getOrCreateDefaultCategory(req.user._id, 'Transfer');
+      
+      // Create debit transaction (money leaving fromAccount)
+      const debitTransaction = await Transaction.create({
+        user: req.user._id,
+        amount: -Math.abs(amount), // Negative amount for debit
+        category: transferCategory,
+        account: fromAccount,
+        date,
+        description: `Transfer to account - ${description}`,
+        type: 'expense', // Treat as expense for the source account
+        transferId,
+        isTransfer: true,
+        fromAccount: fromAccount,
+        toAccount: toAccount
+      });
+      
+      // Create credit transaction (money entering toAccount)  
+      const creditTransaction = await Transaction.create({
+        user: req.user._id,
+        amount: Math.abs(amount), // Positive amount for credit
+        category: transferCategory,
+        account: toAccount,
+        date,
+        description: `Transfer from account - ${description}`,
+        type: 'income', // Treat as income for the destination account
+        transferId,
+        isTransfer: true,
+        fromAccount: fromAccount,
+        toAccount: toAccount
+      });
+      
+      // Update account balances
+      await updateAccountBalance(fromAccount, Math.abs(amount), 'subtract');
+      await updateAccountBalance(toAccount, Math.abs(amount), 'add');
+      
+      // Return both transactions
+      res.status(201).json({
+        message: "Transfer transactions created successfully",
+        transactions: [debitTransaction, creditTransaction],
+        transferId
+      });
+      
+    } else {
+      // For income and expense, create single transaction
+      let finalCategory = category;
+      if (type === 'income') {
+        finalCategory = await getOrCreateDefaultCategory(req.user._id, 'Income');
+      }
+      // For expense, use provided category or leave undefined
+      
+      const transaction = await Transaction.create({
+        user: req.user._id,
+        amount: type === 'expense' ? -Math.abs(amount) : Math.abs(amount), // Negative for expenses, positive for income
+        category: finalCategory,
+        account,
+        date,
+        description,
+        type,
+        isTransfer: false
+      });
+
+      // Update account balances based on transaction
+      await applyTransactionToBalances(transaction);
+
+      res.status(201).json(transaction);
     }
-    // For expense, use provided category or leave undefined
-    
-    const transaction = await Transaction.create({
-      user: req.user._id, // comes from auth middleware
-      amount,
-      category: finalCategory, // Always use default for income/transfer
-      account: (type === 'transfer') ? toAccount : account, // Set account to toAccount for transfers
-      fromAccount: (type === 'income' || type === 'expense') ? undefined : fromAccount,
-      toAccount: (type === 'income' || type === 'expense') ? undefined : toAccount,
-      date,
-      description,
-      type
-    });
-
-    // Update account balances based on transaction
-    await applyTransactionToBalances(transaction);
-
-    res.status(201).json(transaction);
   } catch (err) {
+    console.error("Error creating transaction:", err);
     res.status(500).json({ message: "Error creating transaction", error: err.message });
   }
 };
@@ -130,16 +175,12 @@ export const createTransaction = async (req, res) => {
 // Get all transactions for logged in user
 export const getTransactions = async (req, res) => {
   try {
-    console.log("Fetching transactions for user:", req.user._id);
     const transactions = await Transaction.find({ user: req.user._id })
       .populate('account', 'name type')
       .populate('fromAccount', 'name type')
       .populate('toAccount', 'name type')
       .populate('category', 'name')
       .sort({ date: -1 });
-    
-    console.log("Found", transactions.length, "transactions");
-    console.log("Sample transaction populate result:", transactions[0]);
     
     res.json(transactions);
   } catch (err) {

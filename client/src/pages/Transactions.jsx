@@ -235,11 +235,6 @@ function Transactions() {
                 accountService.getAccounts()
             ]);
             
-            console.log("Fetched transactions:", txs);
-            console.log("Sample transaction structure:", txs[0]);
-            console.log("Fetched categories:", cats);
-            console.log("Fetched accounts:", accs);
-            
             // Set categories and accounts first
             setCategories(Array.isArray(cats) ? cats : []);
             setAccounts(Array.isArray(accs) ? accs : []);
@@ -341,8 +336,6 @@ function Transactions() {
             !aiSuggestion && 
             categories.length > 0) {
             
-            console.log("Auto-triggering AI suggestion for:", form.description);
-            
             setAiSuggesting(true);
             setAiSuggestion(null);
 
@@ -396,34 +389,49 @@ function Transactions() {
         }
         
         try {
-            const payload = {
-                ...form,
-                amount: Number(form.amount)
-            };
-            
-            // Clean up unused fields based on transaction type
-            if (payload.type === 'income' || payload.type === 'expense') {
+            // Handle transfers differently - send to backend as transfer type
+            if (form.type === 'transfer') {
+                const transferData = {
+                    type: 'transfer',
+                    amount: Number(form.amount),
+                    fromAccount: form.fromAccount,
+                    toAccount: form.toAccount,
+                    date: form.date,
+                    description: form.description || 'Transfer'
+                };
+                
+                const result = await transactionService.addTransaction(transferData);
+                
+                if (result.transactions && result.transactions.length === 2) {
+                    success("Transfer completed successfully!");
+                } else {
+                    success("Transfer completed!");
+                }
+            } else {
+                // Handle regular income/expense transactions
+                const payload = {
+                    ...form,
+                    amount: Number(form.amount)
+                };
+                
+                // Clean up unused fields for income/expense transactions
                 delete payload.fromAccount;
                 delete payload.toAccount;
-            } else if (payload.type === 'transfer') {
-                delete payload.account;
+                
+                // Remove empty string values
+                Object.keys(payload).forEach(key => {
+                    if (payload[key] === '') {
+                        delete payload[key];
+                    }
+                });
+                
+                await transactionService.addTransaction(payload);
+                success("Transaction added successfully!");
             }
-            
-            // Remove empty string values
-            Object.keys(payload).forEach(key => {
-                if (payload[key] === '') {
-                    delete payload[key];
-                }
-            });
-            
-            console.log("payload", payload);
-            await transactionService.addTransaction(payload);
-            success("Transaction added successfully!");
             
             // Mark milestone: user has added their first transaction
             if (transactions.length === 0) {
                 await markMilestone('hasAddedTransaction');
-                console.log('First transaction milestone marked');
             }
             
             setForm({ type: "expense", amount: "", category: "", description: "", account: "", fromAccount: "", toAccount: "", date: getToday() });
@@ -491,18 +499,21 @@ function Transactions() {
         }
         
         try {
+            // Note: Transfer editing is complex since they involve two linked transactions
+            // For now, we'll prevent editing transfers and suggest deletion + recreation
+            if (editForm.type === 'transfer') {
+                error("Transfer transactions cannot be edited directly. Please delete and create a new transfer.");
+                return;
+            }
+            
             const payload = {
                 ...editForm,
                 amount: Number(editForm.amount)
             };
             
-            // Clean up unused fields based on transaction type
-            if (payload.type === 'income' || payload.type === 'expense') {
-                delete payload.fromAccount;
-                delete payload.toAccount;
-            } else if (payload.type === 'transfer') {
-                delete payload.account;
-            }
+            // Clean up unused fields for income/expense transactions
+            delete payload.fromAccount;
+            delete payload.toAccount;
             
             // Remove empty string values
             Object.keys(payload).forEach(key => {
@@ -524,8 +535,26 @@ function Transactions() {
 
     const handleDelete = async (id) => {
         try {
-            await transactionService.deleteTransaction(id);
-            success("Transaction deleted successfully!");
+            const transactionToDelete = transactions.find(tx => tx._id === id);
+            
+            // If this is a transfer transaction, we need to delete both linked transactions
+            if (transactionToDelete?.isTransfer && transactionToDelete?.transferId) {
+                const linkedTransactions = transactions.filter(tx => 
+                    tx.transferId === transactionToDelete.transferId
+                );
+                
+                // Delete all linked transfer transactions
+                for (const tx of linkedTransactions) {
+                    await transactionService.deleteTransaction(tx._id);
+                }
+                
+                success("Transfer deleted successfully!");
+            } else {
+                // Delete single transaction
+                await transactionService.deleteTransaction(id);
+                success("Transaction deleted successfully!");
+            }
+            
             setConfirmDeleteId(null);
             setConfirmDeleteLabel("");
             fetchAll();
@@ -947,7 +976,39 @@ function Transactions() {
                                 if (editId === row._id) {
                                     return <Input name="amount" type="number" value={editForm.amount} onChange={handleEditChange} />;
                                 }
-                                return formatCurrency(value);
+                                
+                                // Determine the sign based on transaction type and transfer direction
+                                let displayAmount = value;
+                                let colorClass = '';
+                                
+                                if (row.type === 'expense') {
+                                    displayAmount = -Math.abs(value);
+                                    colorClass = 'text-red-600 dark:text-red-400';
+                                } else if (row.type === 'income') {
+                                    displayAmount = Math.abs(value);
+                                    colorClass = 'text-green-600 dark:text-green-400';
+                                } else if (row.type === 'transfer' || row.isTransfer) {
+                                    // For transfers, show negative for outgoing (from account) and positive for incoming (to account)
+                                    if (row.description && row.description.includes('Transfer to')) {
+                                        // This is the outgoing transfer (from account)
+                                        displayAmount = -Math.abs(value);
+                                        colorClass = 'text-orange-600 dark:text-orange-400';
+                                    } else if (row.description && row.description.includes('Transfer from')) {
+                                        // This is the incoming transfer (to account)
+                                        displayAmount = Math.abs(value);
+                                        colorClass = 'text-blue-600 dark:text-blue-400';
+                                    } else {
+                                        // Fallback for transfers without clear direction
+                                        displayAmount = Math.abs(value);
+                                        colorClass = 'text-gray-600 dark:text-gray-400';
+                                    }
+                                }
+                                
+                                return (
+                                    <span className={colorClass}>
+                                        {formatCurrency(displayAmount)}
+                                    </span>
+                                );
                             }
                         },
                         {

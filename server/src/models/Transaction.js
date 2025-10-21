@@ -47,6 +47,16 @@ const transactionSchema = new mongoose.Schema(
       type: Date,
       required: true,
     },
+    // For linking transfer transactions
+    transferId: {
+      type: String,
+      required: false,
+    },
+    // To identify if this is part of a transfer
+    isTransfer: {
+      type: Boolean,
+      default: false,
+    },
   },
   { timestamps: true }
 );
