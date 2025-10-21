@@ -33,8 +33,11 @@ function Login() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-200 dark:bg-gray-900 p-4">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-slate-200 dark:bg-gray-900 p-4">
       <Card className="w-full max-w-md bg-neutral-800 text-white border-none dark:bg-gray-800 dark:text-gray-100">
+        <div className="flex justify-center p-6 pb-0 max-w-xs mx-auto">
+          <img src="/dark-mode.png" alt="Dark Mode" />
+        </div>
         <CardHeader className="border-none flex align-center flex-col w-2/3 mx-auto pt-6">
           <CardTitle className="text-center">Login to your account</CardTitle>
           <CardDescription className="text-center text-gray-400 dark:text-gray-300 mb-4 text-sm">Enter your email and password to access your dashboard.</CardDescription>
