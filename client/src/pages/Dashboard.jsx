@@ -5,7 +5,6 @@ import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Modal } from "../components/ui/modal";
 import { CustomSelect, CustomSelectItem } from "../components/ui/custom-select";
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from "recharts";
 import { Calendar, Filter, CalendarRange, Brain, TrendingUp, ArrowRight, Bell, CreditCard, AlertTriangle, CheckCircle, Target, DollarSign } from "lucide-react";
 import { getSpendingInsights } from "../services/aiService";
 import budgetService from "../services/budgetService";
@@ -371,12 +370,12 @@ function Dashboard() {
           if (tx.type === "income") {
             incomeSum += tx.amount; // Ensure income is positive
           } else if (tx.type === "expense") {
-            const expenseAmount = tx.amount; // Ensure expense is positive
+            const expenseAmount = Math.abs(tx.amount); // Get positive amount for expense spending
             expenseSum += expenseAmount;
             // Track category spending for expenses
             if (tx.category) {
-              const category = catData.find(cat => cat._id === tx.category);
-              const categoryName = category?.name || "Unknown Category";
+              // tx.category is already a populated object from backend
+              const categoryName = tx.category.name || tx.category || "Unknown Category";
               catMap[categoryName] = (catMap[categoryName] || 0) + expenseAmount;
             } else {
               // Include uncategorized transactions
@@ -557,11 +556,11 @@ function Dashboard() {
             <CardTitle className="text-base">Net Change</CardTitle>
           </CardHeader>
           <CardContent className="pt-2">
-            <p className={`text-3xl font-semibold ${periodIncome + expenses >= 0 
+            <p className={`text-3xl font-semibold ${periodIncome - expenses >= 0 
               ? 'text-green-600 dark:text-green-400' 
               : 'text-red-600 dark:text-red-400'
             }`}>
-              {periodIncome + expenses >= 0 ? '+' : ''}{formatCurrency(periodIncome + expenses)}
+              {periodIncome - expenses >= 0 ? '+' : ''}{formatCurrency(periodIncome - expenses)}
             </p>
             <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
               {periodIncome - expenses >= 0 ? 'Positive cash flow' : 'Negative cash flow'}
@@ -711,18 +710,14 @@ function Dashboard() {
                         {tx.type === "income" ? (
                           <TypePill type="income" />
                         ) : tx.category ? (
-                          categories.find(cat => cat._id === tx.category) ? (
-                            <CategoryPill category={categories.find(cat => cat._id === tx.category)?.name} />
-                          ) : (
-                            <CategoryPill category="Unknown Category" />
-                          )
+                          <CategoryPill category={tx.category.name || tx.category} />
                         ) : (
                           <CategoryPill category="N/A" />
                         )}
                       </TableCell>
                       <TableCell align="right" className={`font-semibold ${tx.type === "income" ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
                         }`}>
-                        {tx.type === "income" ? "+" : "-"}{formatCurrency(tx.amount)}
+                        {tx.type === "income" ? "+" : "-"}{formatCurrency(Math.abs(tx.amount))}
                       </TableCell>
                     </TableRow>
                   ))}
@@ -964,47 +959,60 @@ function Dashboard() {
 
       {/* Spending and Budget Overview */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-6">
-        {/* Spending by Category Chart */}
-        <Card data-tour="spending-chart">
+        {/* Spending by Category Table */}
+        <Card data-tour="spending-table">
           <CardHeader>
             <CardTitle>Spending by Category</CardTitle>
           </CardHeader>
           <CardContent>
             {categorySpending.length > 0 ? (
-              <div className="h-80">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={categorySpending.map(([name, value]) => ({ name, value }))}
-                      cx="50%"
-                      cy="40%"
-                      outerRadius={70}
-                      fill="#8884d8"
-                      dataKey="value"
-                      labelLine={false}
-                    >
-                      {categorySpending.map((entry, index) => (
-                        <Cell
-                          key={`cell-${index}`}
-                          fill={`hsl(${(index * 137.5) % 360}, 70%, 50%)`}
-                        />
-                      ))}
-                    </Pie>
-                    <Tooltip
-                      formatter={(value, name) => [
-                        `$${value.toLocaleString()}`,
-                        name // Show full category name in tooltip
-                      ]}
-                    />
-                    <Legend
-                      verticalAlign="bottom"
-                      formatter={(value) => {
-                        // Show full name in legend, truncate if too long
-                        return value.length > 15 ? value.substring(0, 15) + '...' : value;
-                      }}
-                    />
-                  </PieChart>
-                </ResponsiveContainer>
+              <div className="overflow-x-auto">
+                <Table className="text-sm">
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Category</TableHead>
+                      <TableHead align="right">Amount</TableHead>
+                      <TableHead align="right">Percentage</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {(() => {
+                      // Calculate total spending for percentage calculation
+                      const totalSpending = categorySpending.reduce((sum, [, amount]) => sum + amount, 0);
+                      
+                      // Sort categories by amount (highest first)
+                      const sortedCategories = [...categorySpending].sort((a, b) => b[1] - a[1]);
+                      
+                      return sortedCategories.map(([categoryName, amount]) => {
+                        const percentage = totalSpending > 0 ? (amount / totalSpending * 100) : 0;
+                        
+                        return (
+                          <TableRow key={categoryName}>
+                            <TableCell>
+                              <CategoryPill category={categoryName} />
+                            </TableCell>
+                            <TableCell align="right" className="font-semibold text-red-600 dark:text-red-400">
+                              {formatCurrency(amount)}
+                            </TableCell>
+                            <TableCell align="right" className="text-gray-600 dark:text-gray-400">
+                              {percentage.toFixed(1)}%
+                            </TableCell>
+                          </TableRow>
+                        );
+                      });
+                    })()}
+                  </TableBody>
+                </Table>
+                
+                {/* Total row */}
+                <div className="mt-4 pt-3 border-t border-gray-200 dark:border-gray-700">
+                  <div className="flex justify-between items-center font-semibold">
+                    <span className="text-gray-900 dark:text-gray-100">Total Spending</span>
+                    <span className="text-red-600 dark:text-red-400">
+                      {formatCurrency(categorySpending.reduce((sum, [, amount]) => sum + amount, 0))}
+                    </span>
+                  </div>
+                </div>
               </div>
             ) : (
               <div className="h-64 flex items-center justify-center">

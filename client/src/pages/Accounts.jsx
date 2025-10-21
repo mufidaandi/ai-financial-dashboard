@@ -140,7 +140,8 @@ function Accounts() {
         
         if (toAccountId === accountId) {
           // Payment to this credit card reduces the balance (what you owe)
-          return balance - Math.abs(transaction.amount);
+          // Use raw amount (should be positive for payments)
+          return balance - transaction.amount;
         }
       } else {
         // Check if this is a payment transaction based on category (legacy support)
@@ -152,75 +153,21 @@ function Accounts() {
         
         if (isPayment) {
           // Payments reduce the credit card balance (what you owe)
-          return balance - Math.abs(transaction.amount);
+          // Use raw amount (should be positive for payments)
+          return balance - transaction.amount;
         } else if (transaction.type === 'expense') {
           // Regular expenses increase the credit card balance (what you owe)
-          return balance + Math.abs(transaction.amount);
+          // Since expenses are stored as negative values, subtracting them adds to what you owe
+          return balance - transaction.amount;
         } else {
           // Other income types (rare for credit cards, but handle them)
-          return balance - Math.abs(transaction.amount);
+          // Use raw amount
+          return balance - transaction.amount;
         }
       }
       
       return balance;
     }, 0);
-  };
-
-  // Calculate savings/checking account balance based on transactions
-  const calculateAccountBalance = (accountId, initialBalance = 0) => {
-    const accountTransactions = transactions.filter(transaction => {
-      // Handle regular transactions
-      const regularAccountId = typeof transaction.account === 'string' 
-        ? transaction.account 
-        : transaction.account?._id;
-      
-      // Handle transfers and payments (check both fromAccount and toAccount)
-      const fromAccountId = typeof transaction.fromAccount === 'string'
-        ? transaction.fromAccount
-        : transaction.fromAccount?._id;
-      
-      const toAccountId = typeof transaction.toAccount === 'string'
-        ? transaction.toAccount
-        : transaction.toAccount?._id;
-      
-      return regularAccountId === accountId || fromAccountId === accountId || toAccountId === accountId;
-    });
-    
-    return accountTransactions.reduce((balance, transaction) => {
-      if (transaction.type === 'income') {
-        // Income increases the account balance
-        return balance + Math.abs(transaction.amount);
-      } else if (transaction.type === 'expense') {
-        // Expenses decrease the account balance
-        return balance - Math.abs(transaction.amount);
-      } else if (transaction.type === 'transfer') {
-        const fromAccountId = typeof transaction.fromAccount === 'string'
-          ? transaction.fromAccount
-          : transaction.fromAccount?._id;
-        const toAccountId = typeof transaction.toAccount === 'string'
-          ? transaction.toAccount
-          : transaction.toAccount?._id;
-        
-        if (fromAccountId === accountId) {
-          // Money going out of this account
-          return balance - Math.abs(transaction.amount);
-        } else if (toAccountId === accountId) {
-          // Money coming into this account
-          return balance + Math.abs(transaction.amount);
-        }
-      } else if (transaction.type === 'payment') {
-        const fromAccountId = typeof transaction.fromAccount === 'string'
-          ? transaction.fromAccount
-          : transaction.fromAccount?._id;
-        
-        if (fromAccountId === accountId) {
-          // Payment going out of this account (to credit card)
-          return balance - Math.abs(transaction.amount);
-        }
-      }
-      
-      return balance;
-    }, initialBalance);
   };
 
   const handleChange = (e) => {
@@ -331,7 +278,6 @@ function Accounts() {
   const handleUpdate = async (e) => {
     e.preventDefault();
     
-    // Validation - removed balance validation for Savings/Checking since it's auto-managed
     if (editForm.type === "Credit Card") {
       if (!editForm.creditLimit || !editForm.statementDate || !editForm.dueDate) {
         error("Credit limit, statement date, and due date are required for Credit Card accounts");
@@ -434,8 +380,9 @@ function Accounts() {
       });
       setShowTransferModal(false);
       
-      // Refresh transactions to update balances
+      // Refresh both transactions and accounts to update balances
       await fetchTransactions();
+      await fetchAccounts();
     } catch (err) {
       console.error("Error processing transfer:", err);
       error("Error processing transfer");
@@ -491,8 +438,9 @@ function Accounts() {
       
       success(`Payment of $${paymentData.amount} from ${fromAccount?.name} to ${creditCard?.name} has been recorded successfully!`);
       
-      // Refresh transactions to update all account balances
+      // Refresh both transactions and accounts to update all account balances
       await fetchTransactions();
+      await fetchAccounts();
       
       // Close the modal
       setPayCardModal({ isOpen: false, creditCard: null });
@@ -718,7 +666,7 @@ function Accounts() {
                         <label className="block text-sm font-medium mb-1 dark:text-gray-100">Current Balance</label>
                         <div className="px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md">
                           <span className="text-lg font-semibold text-green-600 dark:text-green-400">
-                            ${calculateAccountBalance(acc._id, acc.balance || 0).toFixed(2)}
+                            ${(acc.balance || 0).toFixed(2)}
                           </span>
                           <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                             Balance is automatically updated by transactions
@@ -784,7 +732,7 @@ function Accounts() {
                       <div className="w-full mb-2">
                         <span className="text-sm text-gray-500 dark:text-gray-400">Current Balance</span>
                         <p className="text-lg font-semibold text-green-600 dark:text-green-400">
-                          ${calculateAccountBalance(acc._id, acc.balance || 0).toFixed(2)}
+                          ${(acc.balance || 0).toFixed(2)}
                         </p>
                       </div>
                     )}

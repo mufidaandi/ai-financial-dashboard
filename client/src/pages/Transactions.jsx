@@ -411,7 +411,7 @@ function Transactions() {
                 // Handle regular income/expense transactions
                 const payload = {
                     ...form,
-                    amount: Number(form.amount)
+                    amount: form.type === 'expense' ? -Math.abs(Number(form.amount)) : Number(form.amount)
                 };
                 
                 // Clean up unused fields for income/expense transactions
@@ -447,7 +447,7 @@ function Transactions() {
         setEditId(tx._id);
         setEditForm({
             type: tx.type,
-            amount: tx.amount,
+            amount: Math.abs(tx.amount), // Always show positive amount in form
             category: tx.category?._id || '',
             description: tx.description,
             account: tx.account?._id || '',
@@ -508,7 +508,7 @@ function Transactions() {
             
             const payload = {
                 ...editForm,
-                amount: Number(editForm.amount)
+                amount: editForm.type === 'expense' ? -Math.abs(Number(editForm.amount)) : Number(editForm.amount)
             };
             
             // Clean up unused fields for income/expense transactions
@@ -538,7 +538,7 @@ function Transactions() {
             const transactionToDelete = transactions.find(tx => tx._id === id);
             
             // If this is a transfer transaction, we need to delete both linked transactions
-            if (transactionToDelete?.isTransfer && transactionToDelete?.transferId) {
+            if (transactionToDelete?.type === 'transfer' && transactionToDelete?.transferId) {
                 const linkedTransactions = transactions.filter(tx => 
                     tx.transferId === transactionToDelete.transferId
                 );
@@ -978,35 +978,36 @@ function Transactions() {
                                 }
                                 
                                 // Determine the sign based on transaction type and transfer direction
-                                let displayAmount = value;
+                                let displayAmount = Math.abs(value);
                                 let colorClass = '';
+                                let prefix = '';
                                 
                                 if (row.type === 'expense') {
-                                    displayAmount = -Math.abs(value);
+                                    prefix = '-';
                                     colorClass = 'text-red-600 dark:text-red-400';
                                 } else if (row.type === 'income') {
-                                    displayAmount = Math.abs(value);
+                                    prefix = '+';
                                     colorClass = 'text-green-600 dark:text-green-400';
-                                } else if (row.type === 'transfer' || row.isTransfer) {
+                                } else if (row.type === 'transfer') {
                                     // For transfers, show negative for outgoing (from account) and positive for incoming (to account)
                                     if (row.description && row.description.includes('Transfer to')) {
                                         // This is the outgoing transfer (from account)
-                                        displayAmount = -Math.abs(value);
+                                        prefix = '-';
                                         colorClass = 'text-orange-600 dark:text-orange-400';
                                     } else if (row.description && row.description.includes('Transfer from')) {
                                         // This is the incoming transfer (to account)
-                                        displayAmount = Math.abs(value);
+                                        prefix = '+';
                                         colorClass = 'text-blue-600 dark:text-blue-400';
                                     } else {
                                         // Fallback for transfers without clear direction
-                                        displayAmount = Math.abs(value);
+                                        prefix = '';
                                         colorClass = 'text-gray-600 dark:text-gray-400';
                                     }
                                 }
                                 
                                 return (
                                     <span className={colorClass}>
-                                        {formatCurrency(displayAmount)}
+                                        {prefix}{formatCurrency(displayAmount)}
                                     </span>
                                 );
                             }

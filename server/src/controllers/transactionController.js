@@ -12,7 +12,7 @@ const getOrCreateDefaultCategory = async (userId, categoryName) => {
 };
 
 // Helper function to update account balance
-const updateAccountBalance = async (accountId, amount, operation) => {
+const updateAccountBalance = async (accountId, amount) => {
   if (!accountId) return;
   
   const account = await Account.findById(accountId);
@@ -20,15 +20,8 @@ const updateAccountBalance = async (accountId, amount, operation) => {
     return; // Only update balances for Savings and Checking accounts
   }
   
-  let balanceChange = 0;
-  if (operation === 'add') {
-    balanceChange = amount;
-  } else if (operation === 'subtract') {
-    balanceChange = -amount;
-  }
-  
   await Account.findByIdAndUpdate(accountId, {
-    $inc: { balance: balanceChange }
+    $inc: { balance: amount }
   });
 };
 
@@ -36,16 +29,13 @@ const updateAccountBalance = async (accountId, amount, operation) => {
 const applyTransactionToBalances = async (transaction) => {
   const { type, account, fromAccount, toAccount, amount } = transaction;
   
-  if (type === 'income') {
-    // Add income to the account
-    await updateAccountBalance(account, amount, 'add');
-  } else if (type === 'expense') {
-    // Subtract expense from the account
-    await updateAccountBalance(account, amount, 'subtract');
+  if (type === 'income' || type === 'expense') {
+    // For income/expense, amount is already correctly signed (positive/negative)
+    await updateAccountBalance(account, amount);
   } else if (type === 'transfer') {
-    // Subtract from source account, add to destination account
-    await updateAccountBalance(fromAccount, amount, 'subtract');
-    await updateAccountBalance(toAccount, amount, 'add');
+    // For transfers: subtract from source, add to destination
+    await updateAccountBalance(fromAccount, -Math.abs(amount));
+    await updateAccountBalance(toAccount, Math.abs(amount));
   }
 };
 
@@ -53,16 +43,13 @@ const applyTransactionToBalances = async (transaction) => {
 const reverseTransactionFromBalances = async (transaction) => {
   const { type, account, fromAccount, toAccount, amount } = transaction;
   
-  if (type === 'income') {
-    // Reverse income: subtract from the account
-    await updateAccountBalance(account, amount, 'subtract');
-  } else if (type === 'expense') {
-    // Reverse expense: add back to the account
-    await updateAccountBalance(account, amount, 'add');
+  if (type === 'income' || type === 'expense') {
+    // Reverse by negating the amount (works for both positive income and negative expense)
+    await updateAccountBalance(account, -amount);
   } else if (type === 'transfer') {
     // Reverse transfer: add back to source, subtract from destination
-    await updateAccountBalance(fromAccount, amount, 'add');
-    await updateAccountBalance(toAccount, amount, 'subtract');
+    await updateAccountBalance(fromAccount, Math.abs(amount));
+    await updateAccountBalance(toAccount, -Math.abs(amount));
   }
 };
 
@@ -101,6 +88,14 @@ export const createTransaction = async (req, res) => {
       const transferId = `transfer_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
       const transferCategory = await getOrCreateDefaultCategory(req.user._id, 'Transfer');
       
+      // Fetch account names for proper descriptions
+      const fromAccountData = await Account.findById(fromAccount);
+      const toAccountData = await Account.findById(toAccount);
+      
+      if (!fromAccountData || !toAccountData) {
+        return res.status(400).json({ message: "One or both accounts not found" });
+      }
+      
       // Create debit transaction (money leaving fromAccount)
       const debitTransaction = await Transaction.create({
         user: req.user._id,
@@ -108,10 +103,9 @@ export const createTransaction = async (req, res) => {
         category: transferCategory,
         account: fromAccount,
         date,
-        description: `Transfer to account - ${description}`,
-        type: 'expense', // Treat as expense for the source account
+        description: `Transfer to ${toAccountData.name}`,
+        type: 'transfer', // Use transfer type instead of expense
         transferId,
-        isTransfer: true,
         fromAccount: fromAccount,
         toAccount: toAccount
       });
@@ -123,17 +117,16 @@ export const createTransaction = async (req, res) => {
         category: transferCategory,
         account: toAccount,
         date,
-        description: `Transfer from account - ${description}`,
-        type: 'income', // Treat as income for the destination account
+        description: `Transfer from ${fromAccountData.name}`,
+        type: 'transfer', // Use transfer type instead of income
         transferId,
-        isTransfer: true,
         fromAccount: fromAccount,
         toAccount: toAccount
       });
       
       // Update account balances
-      await updateAccountBalance(fromAccount, Math.abs(amount), 'subtract');
-      await updateAccountBalance(toAccount, Math.abs(amount), 'add');
+      await updateAccountBalance(fromAccount, -Math.abs(amount));
+      await updateAccountBalance(toAccount, Math.abs(amount));
       
       // Return both transactions
       res.status(201).json({
@@ -231,13 +224,16 @@ export const updateTransaction = async (req, res) => {
     }
     
     // Prepare update data with proper field exclusions
-    let updateData = { amount, date, description };
+    let updateData = { date, description };
     
     if (type === 'income' || type === 'expense') {
       updateData.type = type;
       updateData.account = account;
       updateData.fromAccount = undefined;
       updateData.toAccount = undefined;
+      
+      // Amount should already have correct sign from frontend
+      updateData.amount = amount;
       
       // Handle categories based on type
       if (type === 'income') {
@@ -252,6 +248,7 @@ export const updateTransaction = async (req, res) => {
       updateData.fromAccount = fromAccount;
       updateData.toAccount = toAccount;
       updateData.account = toAccount; // Set account to toAccount for transfers
+      updateData.amount = amount; // Amount should already have correct sign
       // Always force Transfer category for transfer transactions
       updateData.category = await getOrCreateDefaultCategory(req.user._id, 'Transfer');
     } else {
@@ -260,6 +257,11 @@ export const updateTransaction = async (req, res) => {
       if (category !== undefined) updateData.category = category;
       if (fromAccount !== undefined) updateData.fromAccount = fromAccount;
       if (toAccount !== undefined) updateData.toAccount = toAccount;
+      
+      // If amount is being updated, use it directly (should already have correct sign)
+      if (amount !== undefined) {
+        updateData.amount = amount;
+      }
     }
     
     const transaction = await Transaction.findOneAndUpdate(
