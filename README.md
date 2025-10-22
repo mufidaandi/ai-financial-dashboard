@@ -1,4 +1,8 @@
-# AI Financial Dashboard 💰
+<div align="center">
+  <img src="client/public/logo-icon.png" alt="ExpenSure Logo" width="120" height="120">
+  <h1>ExpenSure 💰</h1>
+  <p><em>AI Financial Dashboard</em></p>
+</div>
 
 A comprehensive personal finance management application with AI-powered insights and recommendations. Track your expenses, manage accounts, and get intelligent financial advice powered by Google's Gemini AI.
 
@@ -108,7 +112,7 @@ A comprehensive personal finance management application with AI-powered insights
 
 ### Installation
 
-1. **Clone the repository**
+1. **Clone the ExpenSure repository**
    ```bash
    git clone https://github.com/mufidaandi/ai-financial-dashboard.git
    cd ai-financial-dashboard
@@ -171,7 +175,7 @@ A comprehensive personal finance management application with AI-powered insights
    npm run dev
    ```
 
-7. **Access the application**
+7. **Access ExpenSure**
    - Frontend: http://localhost:5173
    - Backend API: http://localhost:3000
 
@@ -479,22 +483,6 @@ NODE_ENV=production
 VITE_API_URL=https://your-backend.vercel.app
 ```
 
-## 🎯 Future Enhancements
-
-- [ ] Email notifications for budget alerts
-- [ ] Expense forecasting and predictions
-- [ ] Multi-currency support
-- [ ] Bank account integration (Plaid/Open Banking)
-- [ ] Mobile app development (React Native)
-- [ ] Advanced reporting and analytics
-- [ ] Goal setting and tracking
-- [ ] Receipt image upload and processing
-- [ ] Investment portfolio tracking
-- [ ] Bill reminder automation
-- [ ] Subscription tracking and management
-- [ ] Tax category suggestions and reports
-
-
 ## 🙏 Acknowledgments
 
 - [Google Gemini AI](https://ai.google.dev/) for powering the AI features
@@ -509,4 +497,7 @@ If you have any questions or need help, please open an issue on GitHub or contac
 
 ---
 
-**Built with ❤️ for better financial management**
+<div align="center">
+  <img src="client/public/logo-icon.png" alt="ExpenSure Logo" width="24" height="24">
+  <strong>ExpenSure - Built with ❤️ for better financial management</strong>
+</div>
