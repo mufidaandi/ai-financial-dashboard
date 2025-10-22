@@ -27,15 +27,8 @@ const createRateLimiter = (config, options = {}) => {
     },
     standardHeaders: true,
     legacyHeaders: false,
-    // Use IP address from X-Forwarded-For header when behind proxy
-    keyGenerator: (req) => {
-      // Get real IP address (works with proxies like Vercel)
-      const ip = req.ip || 
-                 req.connection.remoteAddress || 
-                 req.socket.remoteAddress || 
-                 (req.connection.socket ? req.connection.socket.remoteAddress : null);
-      return ip;
-    },
+    // Remove custom keyGenerator to use express-rate-limit's default IPv6-safe implementation
+    // The default keyGenerator automatically handles IPv6 addresses correctly
     handler: (req, res) => {
       res.status(429).json({
         error: errorMessage,
