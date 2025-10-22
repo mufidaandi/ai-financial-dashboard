@@ -4,7 +4,6 @@ class OnboardingService {
   // Get user's onboarding state from database
   async getOnboardingState() {
     try {
-      console.log('API: Getting onboarding state from database...');
       const response = await API.get('/auth/onboarding');
       console.log('API: Onboarding state response:', response.data);
       return response.data.onboarding;

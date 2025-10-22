@@ -1,4 +1,5 @@
 import axios from "axios";
+import { tokenManager } from './utils/tokenManager';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL 
   ? `${import.meta.env.VITE_API_URL}/api`
@@ -6,46 +7,70 @@ const API_BASE_URL = import.meta.env.VITE_API_URL
 
 const API = axios.create({ baseURL: API_BASE_URL });
 
-// attach token automatically
-API.interceptors.request.use((req) => {
-  const user = localStorage.getItem("user");
-  if (user) {
-    try {
-      const userData = JSON.parse(user);
-      // Handle both old and new token formats
-      let token = null;
-      
-      if (userData.token) {
-        // Direct token format
-        token = userData.token;
-      } else if (userData.user && userData.user.token) {
-        // Nested user format
-        token = userData.user.token;
+// Request interceptor to attach token automatically
+API.interceptors.request.use(async (req) => {
+  try {
+    // Skip token attachment for auth endpoints
+    const isAuthEndpoint = req.url?.includes('/auth/login') || 
+                          req.url?.includes('/auth/register') || 
+                          req.url?.includes('/auth/refresh');
+    
+    if (!isAuthEndpoint) {
+      const accessToken = await tokenManager.getValidAccessToken();
+      if (accessToken) {
+        req.headers.Authorization = `Bearer ${accessToken}`;
       }
-      
-      if (token) {
-        req.headers.Authorization = `Bearer ${token}`;
-      }
-    } catch (err) {
-      console.error('Error parsing user from localStorage:', err);
     }
+  } catch (err) {
+    console.error('Error attaching token to request:', err);
+    // Let the request proceed without token for public endpoints
   }
+  
   return req;
+}, (error) => {
+  return Promise.reject(error);
 });
 
-// Handle response errors globally
+// Response interceptor for handling token refresh
 API.interceptors.response.use(
   (response) => response,
-  (error) => {
-    // If we get a 401, it usually means the token is expired
+  async (error) => {
+    const originalRequest = error.config;
+
+    // If we get a 401 and haven't already tried to refresh
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true;
+
+      try {
+        // Skip refresh for auth endpoints
+        const isAuthEndpoint = originalRequest.url?.includes('/auth/login') || 
+                              originalRequest.url?.includes('/auth/register') || 
+                              originalRequest.url?.includes('/auth/refresh');
+        
+        if (!isAuthEndpoint) {
+          const newAccessToken = await tokenManager.refreshAccessToken();
+          originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+          return API(originalRequest);
+        }
+      } catch (refreshError) {
+        console.error('Token refresh failed:', refreshError);
+        // Clear tokens and redirect to login
+        tokenManager.clearTokens();
+        if (window.location.pathname !== '/' && window.location.pathname !== '/register') {
+          window.location.href = '/';
+        }
+        return Promise.reject(refreshError);
+      }
+    }
+
+    // For other errors or if retry failed
     if (error.response?.status === 401) {
-      // Clear local storage and redirect to login
-      localStorage.removeItem("user");
-      // Only redirect if not already on login page
+      tokenManager.clearTokens();
       if (window.location.pathname !== '/' && window.location.pathname !== '/register') {
         window.location.href = '/';
       }
     }
+
     return Promise.reject(error);
   }
 );

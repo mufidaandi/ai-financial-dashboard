@@ -1,42 +1,61 @@
 // src/services/authService.js
 import API from "../api";
-import { isTokenExpired } from "../utils/authUtils";
+import { tokenManager } from "../utils/tokenManager";
+import { CacheService } from "./cacheService";
 
-const getStoredUser = () => {
-  const stored = JSON.parse(localStorage.getItem("user"));
-  if (!stored || isTokenExpired(stored.token)) {
-    logout();
-    return null;
+// Helper function to handle authentication response and token storage
+const handleAuthResponse = (responseData) => {
+  // Handle new token format
+  if (responseData.accessToken && responseData.refreshToken) {
+    tokenManager.setTokens(responseData.accessToken, responseData.refreshToken, responseData.user);
+  } else if (responseData.token) {
+    // Backward compatibility with old format
+    const legacyData = {
+      accessToken: responseData.token,
+      refreshToken: null,
+      user: responseData.user
+    };
+    localStorage.setItem("user", JSON.stringify(legacyData));
   }
-  return stored;
 };
-
-// Attach token automatically
-API.interceptors.request.use((config) => {
-  const stored = getStoredUser();
-  if (stored && stored.token) {
-    config.headers.Authorization = `Bearer ${stored.token}`;
-  }
-  return config;
-});
 
 // Register
 const register = async (userData) => {
   const res = await API.post("/auth/register", userData);
-  if (res.data.token) localStorage.setItem("user", JSON.stringify(res.data));
+  
+  handleAuthResponse(res.data);
+  
   return res.data;
 };
 
 // Login
 const login = async (userData) => {
   const res = await API.post("/auth/login", userData);
-  if (res.data.token) localStorage.setItem("user", JSON.stringify(res.data));
+  
+  handleAuthResponse(res.data);
+  
   return res.data;
 };
 
 // Logout
 const logout = () => {
-  localStorage.removeItem("user");
+  tokenManager.clearTokens();
+  // Clear all cached data when user logs out
+  CacheService.clearAll();
 };
 
-export default { register, login, logout, getStoredUser };
+// Get stored user
+const getStoredUser = () => {
+  const tokens = tokenManager.getTokens();
+  if (!tokens) return null;
+  
+  const stored = JSON.parse(localStorage.getItem("user"));
+  return stored?.user || null;
+};
+
+// Refresh token
+const refreshToken = async () => {
+  return await tokenManager.refreshAccessToken();
+};
+
+export default { register, login, logout, getStoredUser, refreshToken };
