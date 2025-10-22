@@ -227,7 +227,7 @@ export const getBudgetProgress = async (req, res) => {
       
       // Calculate total spent
       const totalSpent = transactions.reduce((sum, tx) => sum + tx.amount, 0);
-      const percentageSpent = budget.amount > 0 ? (totalSpent / budget.amount) * 100 : 0;
+      const percentageSpent = budget.amount > 0 ? (Math.abs(totalSpent / budget.amount)) * 100 : 0;
       
       // Determine status
       let status = 'on-track';
@@ -248,7 +248,7 @@ export const getBudgetProgress = async (req, res) => {
       budgetProgress.push({
         budget: budget,
         totalSpent: totalSpent,
-        remaining: Math.max(0, budget.amount - totalSpent),
+        remaining: Math.max(0, budget.amount + totalSpent),
         percentageSpent: Math.round(percentageSpent * 100) / 100,
         status: status,
         currentPeriodStart: currentStart,
@@ -310,10 +310,10 @@ export const getBudgetSummary = async (req, res) => {
       totalBudgets: budgets.length,
       totalBudgeted: totalBudgeted,
       totalSpent: totalSpent,
-      remaining: Math.max(0, totalBudgeted - totalSpent),
+      remaining: Math.max(0, totalBudgeted + totalSpent),
       budgetsOverLimit: budgetsOverLimit,
       budgetsNearLimit: budgetsNearLimit,
-      overallPercentage: totalBudgeted > 0 ? Math.round((totalSpent / totalBudgeted) * 100 * 100) / 100 : 0
+      overallPercentage: totalBudgeted > 0 ? Math.abs(Math.round((totalSpent / totalBudgeted)) * 100 * 100) / 100 : 0
     });
   } catch (err) {
     console.error("Error fetching budget summary:", err);
