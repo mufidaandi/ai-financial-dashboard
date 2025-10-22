@@ -1,13 +1,13 @@
 // src/components/PrivateRoute.jsx
 import { Navigate } from "react-router-dom";
-import authService from "../services/authService";
-import { isTokenExpired } from "../utils/authUtils";
+import { tokenManager } from "../utils/tokenManager";
 
 function PrivateRoute({ children }) {
-  const storedUser = JSON.parse(localStorage.getItem("user"));
-
-  if (!storedUser || !storedUser.token || isTokenExpired(storedUser.token)) {
-    authService.logout();
+  const tokens = tokenManager.getTokens();
+  
+  // Check if user has tokens and if refresh token is still valid
+  if (!tokens || !tokens.accessToken || tokenManager.isRefreshTokenExpired()) {
+    tokenManager.clearTokens();
     return <Navigate to="/" replace />; // redirect to login
   }
 

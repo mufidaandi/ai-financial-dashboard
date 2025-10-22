@@ -4,6 +4,7 @@ import { Card, CardHeader, CardTitle, CardContent } from "../components/ui/card"
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Modal } from "../components/ui/modal";
+import { CustomDatePicker } from "../components/ui/CustomDatePicker";
 import { CustomSelect, CustomSelectItem } from "../components/ui/custom-select";
 import { Calendar, Filter, CalendarRange, Brain, TrendingUp, ArrowRight, Bell, CreditCard, AlertTriangle, CheckCircle, Target, DollarSign } from "lucide-react";
 import { getSpendingInsights } from "../services/aiService";
@@ -449,9 +450,9 @@ function Dashboard() {
           <div>
             <h1 className="text-xl sm:text-2xl font-bold mb-2 dark:text-gray-100">Dashboard</h1>
             <div className="flex items-center gap-2">
-              <p className="text-sm sm:text-base text-muted-foreground dark:text-gray-400">Welcome back! Here's your financial overview.</p>
+              <p className="text-sm sm:text-base text-gray-600 dark:text-gray-300">Welcome back! Here's your financial overview.</p>
               {showingPreviousMonth && (
-                <div className="flex items-center gap-1 px-2 py-1 bg-blue-100 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 text-xs rounded-md border border-blue-200 dark:border-blue-800">
+                <div className="flex items-center gap-1 px-2 py-1 bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-200 text-xs rounded-md border border-blue-200 dark:border-blue-800">
                   <ArrowRight className="h-3 w-3 rotate-180" />
                   <span>Showing previous month data</span>
                 </div>
@@ -461,12 +462,15 @@ function Dashboard() {
 
           {/* Month Filter */}
           <div className="flex items-center gap-2">
-            <Filter className="h-4 w-4 text-gray-500 dark:text-gray-400" />
+            <Filter className="h-4 w-4 text-gray-600 dark:text-gray-300" aria-hidden="true" />
+            <label htmlFor="month-filter" className="sr-only">Filter by month</label>
             <CustomSelect
+              id="month-filter"
               value={getFilterDisplayValue()}
               onValueChange={handleFilterChange}
               placeholder="Select Month"
               className="min-w-[140px] sm:min-w-[180px]"
+              aria-label="Filter transactions by month"
             >
               {generateMonthOptions().map(option => (
                 <CustomSelectItem key={option.value} value={option.value}>
@@ -480,7 +484,7 @@ function Dashboard() {
 
       {/* Custom Date Range Modal */}
       <Modal open={showCustomRangeModal} onClose={handleModalClose}>
-        <div className="p-4 sm:p-6">
+        <div className="">
           <div className="flex items-center gap-2 mb-6">
             <CalendarRange className="h-5 w-5" />
             <h2 className="text-xl font-semibold dark:text-gray-100">Select Custom Date Range</h2>
@@ -491,11 +495,11 @@ function Dashboard() {
               <label className="block text-sm font-medium mb-2 dark:text-gray-100">
                 Start Date
               </label>
-              <Input
-                type="date"
+              <CustomDatePicker
+                name="startDate"
                 value={customDateRange.startDate}
                 onChange={(e) => setCustomDateRange({ ...customDateRange, startDate: e.target.value })}
-                className="w-full"
+                placeholder="Select start date"
               />
             </div>
 
@@ -503,11 +507,12 @@ function Dashboard() {
               <label className="block text-sm font-medium mb-2 dark:text-gray-100">
                 End Date
               </label>
-              <Input
-                type="date"
+              <CustomDatePicker
+                name="endDate"
                 value={customDateRange.endDate}
                 onChange={(e) => setCustomDateRange({ ...customDateRange, endDate: e.target.value })}
-                className="w-full"
+                placeholder="Select end date"
+                disabled={!customDateRange.startDate}
                 min={customDateRange.startDate}
               />
             </div>
@@ -532,90 +537,99 @@ function Dashboard() {
       </Modal>
 
       {/* Financial Overview */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6" data-tour="financial-metrics">
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base">Period Income</CardTitle>
-          </CardHeader>
-          <CardContent className="pt-2">
-            <p className="text-3xl font-semibold text-green-600 dark:text-green-400">{formatCurrency(periodIncome)}</p>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Income for selected period</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base">Period Expenses</CardTitle>
-          </CardHeader>
-          <CardContent className="pt-2">
-            <p className="text-3xl font-semibold text-red-600 dark:text-red-400">{formatCurrency(expenses)}</p>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Expenses for selected period</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base">Net Change</CardTitle>
-          </CardHeader>
-          <CardContent className="pt-2">
-            <p className={`text-3xl font-semibold ${periodIncome - expenses >= 0 
-              ? 'text-green-600 dark:text-green-400' 
-              : 'text-red-600 dark:text-red-400'
-            }`}>
-              {periodIncome - expenses >= 0 ? '+' : ''}{formatCurrency(periodIncome - expenses)}
-            </p>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-              {periodIncome - expenses >= 0 ? 'Positive cash flow' : 'Negative cash flow'}
-            </p>
-          </CardContent>
-        </Card>
-      </div>
+      <section aria-labelledby="financial-overview-heading">
+        <h2 id="financial-overview-heading" className="sr-only">Financial Overview</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6" data-tour="financial-metrics">
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base">Period Income</CardTitle>
+            </CardHeader>
+            <CardContent className="pt-2">
+              <p className="text-3xl font-semibold text-green-700 dark:text-green-300" aria-label={`Period income: ${formatCurrency(periodIncome)}`}>
+                {formatCurrency(periodIncome)}
+              </p>
+              <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">Income for selected period</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base">Period Expenses</CardTitle>
+            </CardHeader>
+            <CardContent className="pt-2">
+              <p className="text-3xl font-semibold text-red-700 dark:text-red-300" aria-label={`Period expenses: ${formatCurrency(expenses)}`}>
+                {formatCurrency(expenses)}
+              </p>
+              <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">Expenses for selected period</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base">Net Change</CardTitle>
+            </CardHeader>
+            <CardContent className="pt-2">
+              <p className={`text-3xl font-semibold ${periodIncome - expenses >= 0 
+                ? 'text-green-700 dark:text-green-300' 
+                : 'text-red-700 dark:text-red-300'
+              }`} aria-label={`Net change: ${periodIncome - expenses >= 0 ? 'positive' : 'negative'} ${formatCurrency(Math.abs(periodIncome - expenses))}`}>
+                {periodIncome - expenses >= 0 ? '+' : ''}{formatCurrency(periodIncome - expenses)}
+              </p>
+              <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">
+                {periodIncome - expenses >= 0 ? 'Positive cash flow' : 'Negative cash flow'}
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+      </section>
 
       {/* Budget Overview */}
       {budgetSummary && budgetSummary.totalBudgets > 0 && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6" data-tour="budget-cards">
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base flex items-center gap-2">
-                <Target className="h-4 w-4 text-blue-500" />
-                Total Budgets
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="pt-2">
-              <p className="text-2xl font-semibold text-blue-600 dark:text-blue-400">
-                {budgetSummary.totalBudgets}
-              </p>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base flex items-center gap-2">
-                <DollarSign className="h-4 w-4 text-green-500" />
-                Budgeted
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="pt-2">
-              <p className="text-2xl font-semibold text-green-600 dark:text-green-400">
-                {formatCurrency(budgetSummary.totalBudgeted)}
-              </p>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base flex items-center gap-2">
-                <TrendingUp className="h-4 w-4 text-orange-500" />
-                Spent
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="pt-2">
-              <p className="text-2xl font-semibold text-orange-600 dark:text-orange-400">
-                {formatCurrency(budgetSummary.totalSpent)}
-              </p>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                {budgetSummary.overallPercentage}% of budget
-              </p>
-            </CardContent>
-          </Card>
+        <section aria-labelledby="budget-overview-heading">
+          <h2 id="budget-overview-heading" className="sr-only">Budget Overview</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6" data-tour="budget-cards">
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Target className="h-4 w-4 text-blue-600 dark:text-blue-400" aria-hidden="true" />
+                  Total Budgets
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pt-2">
+                <p className="text-2xl font-semibold text-blue-700 dark:text-blue-300" aria-label={`Total budgets: ${budgetSummary.totalBudgets}`}>
+                  {budgetSummary.totalBudgets}
+                </p>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <DollarSign className="h-4 w-4 text-green-700 dark:text-green-300" aria-hidden="true" />
+                  Budgeted
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pt-2">
+                <p className="text-2xl font-semibold text-green-700 dark:text-green-300" aria-label={`Total budgeted: ${formatCurrency(budgetSummary.totalBudgeted)}`}>
+                  {formatCurrency(budgetSummary.totalBudgeted)}
+                </p>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <TrendingUp className="h-4 w-4 text-orange-700 dark:text-orange-400" aria-hidden="true" />
+                  Spent
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pt-2">
+                <p className="text-2xl font-semibold text-orange-700 dark:text-orange-300" aria-label={`Total spent: ${formatCurrency(budgetSummary.totalSpent)}`}>
+                  {formatCurrency(budgetSummary.totalSpent)}
+                </p>
+                <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">
+                  {budgetSummary.overallPercentage}% of budget
+                </p>
+              </CardContent>
+            </Card>
           
           <Card>
             <CardHeader className="pb-3">
@@ -643,19 +657,19 @@ function Dashboard() {
                             </div>
                           )}
                           {statusCounts['at-limit'] > 0 && (
-                            <div className="flex items-center gap-2 text-orange-600 dark:text-orange-400">
+                            <div className="flex items-center gap-2 text-orange-700 dark:text-orange-400">
                               <Target className="h-4 w-4" />
                               <span className="text-sm">{statusCounts['at-limit']} at limit</span>
                             </div>
                           )}
                           {statusCounts['warning'] > 0 && (
-                            <div className="flex items-center gap-2 text-yellow-600 dark:text-yellow-400">
+                            <div className="flex items-center gap-2 text-yellow-700 dark:text-yellow-300">
                               <AlertTriangle className="h-4 w-4" />
                               <span className="text-sm">{statusCounts['warning']} near limit</span>
                             </div>
                           )}
                           {statusCounts['on-track'] > 0 && (
-                            <div className="flex items-center gap-2 text-green-600 dark:text-green-400">
+                            <div className="flex items-center gap-2 text-green-700 dark:text-green-300">
                               <CheckCircle className="h-4 w-4" />
                               <span className="text-sm">{statusCounts['on-track']} on track</span>
                             </div>
@@ -679,7 +693,8 @@ function Dashboard() {
               </div>
             </CardContent>
           </Card>
-        </div>
+          </div>
+        </section>
       )}
 
       {/* Recent Transactions and Payment Reminders */}
@@ -688,19 +703,22 @@ function Dashboard() {
         <div className={`${(reminders.length > 0 || budgetAlerts.length > 0) ? 'lg:col-span-2' : 'col-span-1'}`}>
           <Card data-tour="recent-transactions">
             <CardHeader>
-              <CardTitle>Recent Transactions</CardTitle>
+              <CardTitle className="text-lg font-semibold text-gray-900 dark:text-gray-100" id="recent-transactions-title">Recent Transactions</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="overflow-x-auto">
-                <Table className="text-xs sm:text-sm min-w-full">
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Date</TableHead>
-                    <TableHead>Description</TableHead>
-                    <TableHead>Category</TableHead>
-                    <TableHead align="right">Amount</TableHead>
-                  </TableRow>
-                </TableHeader>
+                <Table className="text-xs sm:text-sm min-w-full" aria-labelledby="recent-transactions-title">
+                  <caption className="sr-only">
+                    Recent financial transactions showing date, description, category, and amount for the last 5 transactions
+                  </caption>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead scope="col">Date</TableHead>
+                      <TableHead scope="col">Description</TableHead>
+                      <TableHead scope="col">Category</TableHead>
+                      <TableHead scope="col" className="text-right">Amount</TableHead>
+                    </TableRow>
+                  </TableHeader>
                 <TableBody>
                   {filteredTransactions.slice(0, 5).map(tx => (
                     <TableRow key={tx._id}>
@@ -715,9 +733,11 @@ function Dashboard() {
                           <CategoryPill category="N/A" />
                         )}
                       </TableCell>
-                      <TableCell align="right" className={`font-semibold ${tx.type === "income" ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"
+                      <TableCell className={`text-right font-semibold ${tx.type === "income" ? "text-green-700 dark:text-green-300" : "text-red-700 dark:text-red-300"
                         }`}>
-                        {tx.type === "income" ? "+" : "-"}{formatCurrency(Math.abs(tx.amount))}
+                        <span aria-label={`${tx.type === "income" ? "Income" : "Expense"} of ${formatCurrency(Math.abs(tx.amount))}`}>
+                          {tx.type === "income" ? "+" : "-"}{formatCurrency(Math.abs(tx.amount))}
+                        </span>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -742,20 +762,22 @@ function Dashboard() {
             {reminders.length > 0 && (
               <Card>
                 <CardHeader className="pb-3">
-                  <CardTitle className="flex items-center gap-2 text-base">
-                    <Bell className="h-4 w-4 text-orange-500" />
+                  <CardTitle className="flex items-center gap-2 text-base" id="payment-reminders-title">
+                    <Bell className="h-4 w-4 text-orange-700 dark:text-orange-400" aria-hidden="true" />
                     Payment Reminders
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="pt-0">
-                  <div className="space-y-3">
+                <CardContent className="pt-0" aria-labelledby="payment-reminders-title">
+                  <div className="space-y-3" role="list" aria-label="Payment reminders list">
                     {reminders.slice(0, 2).map((reminder) => (
                       <div
                         key={reminder.id}
+                        role="listitem"
                         className={`p-3 rounded-lg border-l-4 ${reminder.priority === 'high' ? 'border-red-500 bg-red-50 dark:bg-red-900/10' :
                           reminder.priority === 'medium' ? 'border-yellow-500 bg-yellow-50 dark:bg-yellow-900/10' :
                             'border-blue-500 bg-blue-50 dark:bg-blue-900/10'
                           }`}
+                        aria-label={`${reminder.priority} priority reminder for ${reminder.accountName}: ${reminder.description}`}
                       >
                         <div className="flex items-start justify-between gap-2">
                           <div className="flex items-start gap-2 flex-1 min-w-0">
@@ -770,13 +792,13 @@ function Dashboard() {
                               <h4 className="font-medium text-sm text-gray-900 dark:text-gray-100 mb-1 truncate">
                                 {reminder.accountName}
                               </h4>
-                              <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">
+                              <p className="text-xs text-gray-700 dark:text-gray-300 mb-1">
                                 {reminder.description}
                               </p>
                               <div className="flex items-center gap-1 flex-wrap">
-                                <span className={`text-xs px-1.5 py-0.5 rounded-full ${reminder.priority === 'high' ? 'bg-red-100 dark:bg-red-900/20 text-red-700 dark:text-red-300' :
-                                  reminder.priority === 'medium' ? 'bg-yellow-100 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-300' :
-                                    'bg-blue-100 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300'
+                                <span className={`text-xs px-1.5 py-0.5 rounded-full ${reminder.priority === 'high' ? 'bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-200' :
+                                  reminder.priority === 'medium' ? 'bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-200' :
+                                    'bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-200'
                                   }`}>
                                   {reminder.priority}
                                 </span>
@@ -788,8 +810,9 @@ function Dashboard() {
                             variant="outline"
                             size="sm"
                             className="flex items-center gap-1 text-xs px-2 py-1 h-6 shrink-0"
+                            aria-label={`Mark ${reminder.accountName} payment as paid`}
                           >
-                            <CheckCircle className="h-3 w-3" />
+                            <CheckCircle className="h-3 w-3" aria-hidden="true" />
                             Paid
                           </Button>
                         </div>
@@ -811,21 +834,23 @@ function Dashboard() {
             {budgetAlerts.length > 0 && (
               <Card>
                 <CardHeader className="pb-3">
-                  <CardTitle className="flex items-center gap-2 text-base">
-                    <Target className="h-4 w-4 text-red-500" />
+                  <CardTitle className="flex items-center gap-2 text-base" id="budget-alerts-title">
+                    <Target className="h-4 w-4 text-red-600 dark:text-red-400" aria-hidden="true" />
                     Budget Alerts
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="pt-0">
-                  <div className="space-y-3">
+                <CardContent className="pt-0" aria-labelledby="budget-alerts-title">
+                  <div className="space-y-3" role="list" aria-label="Budget alerts list">
                     {budgetAlerts.map((alert) => (
                       <div
                         key={alert.budget._id}
+                        role="listitem"
                         className={`p-3 rounded-lg border-l-4 ${
                           alert.status === 'over-budget' 
                             ? 'border-red-500 bg-red-50 dark:bg-red-900/10' 
                             : 'border-yellow-500 bg-yellow-50 dark:bg-yellow-900/10'
                         }`}
+                        aria-label={`Budget alert for ${alert.budget.name}: ${alert.status === 'over-budget' ? 'Over budget' : 'Near budget limit'}`}
                       >
                         <div className="flex items-start gap-2">
                           <div className={`p-1.5 rounded-full ${
@@ -836,14 +861,14 @@ function Dashboard() {
                             <AlertTriangle className={`h-3 w-3 ${
                               alert.status === 'over-budget' 
                                 ? 'text-red-600 dark:text-red-400' 
-                                : 'text-yellow-600 dark:text-yellow-400'
+                                : 'text-yellow-700 dark:text-yellow-300'
                             }`} />
                           </div>
                           <div className="flex-1 min-w-0">
                             <h4 className="font-medium text-sm text-gray-900 dark:text-gray-100 mb-1">
                               {alert.budget.name}
                             </h4>
-                            <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">
+                            <p className="text-xs text-gray-700 dark:text-gray-300 mb-1">
                               {formatCurrency(alert.totalSpent)} of {formatCurrency(alert.budget.amount)} spent
                             </p>
                             <div className="flex items-center gap-2">
@@ -853,12 +878,17 @@ function Dashboard() {
                                     alert.status === 'over-budget' ? 'bg-red-500' : 'bg-yellow-500'
                                   }`}
                                   style={{ width: `${Math.min(alert.percentageSpent, 100)}%` }}
+                                  role="progressbar"
+                                  aria-valuenow={alert.percentageSpent}
+                                  aria-valuemin={0}
+                                  aria-valuemax={100}
+                                  aria-label={`Budget progress: ${alert.percentageSpent.toFixed(0)}% of budget spent`}
                                 ></div>
                               </div>
                               <span className={`text-xs font-medium ${
                                 alert.status === 'over-budget' 
-                                  ? 'text-red-600 dark:text-red-400' 
-                                  : 'text-yellow-600 dark:text-yellow-400'
+                                  ? 'text-red-700 dark:text-red-300' 
+                                  : 'text-yellow-700 dark:text-yellow-300'
                               }`}>
                                 {alert.percentageSpent.toFixed(0)}%
                               </span>
@@ -868,7 +898,11 @@ function Dashboard() {
                       </div>
                     ))}
                     <div className="text-center">
-                      <Link to="/budgets" className="text-xs text-blue-600 dark:text-blue-400 hover:underline">
+                      <Link 
+                        to="/budgets" 
+                        className="text-xs text-blue-700 dark:text-blue-300 hover:underline focus:outline-none focus:ring-2 focus:ring-blue-800 focus:ring-offset-2 rounded dark:focus:ring-blue-400"
+                        aria-label="View all budgets and their details"
+                      >
                         View all budgets →
                       </Link>
                     </div>
@@ -913,7 +947,7 @@ function Dashboard() {
                           rec.priority === 'medium' ? 'bg-yellow-100 dark:bg-yellow-900/20' :
                             'bg-green-100 dark:bg-green-900/20'
                           }`}>
-                          {rec.type === 'savings' && <TrendingUp className="h-3 w-3 text-green-600 dark:text-green-400" />}
+                          {rec.type === 'savings' && <TrendingUp className="h-3 w-3 text-green-700 dark:text-green-300" />}
                           {rec.type === 'budgeting' && <Calendar className="h-3 w-3 text-blue-600 dark:text-blue-400" />}
                           {rec.type === 'category' && <Filter className="h-3 w-3 text-purple-600 dark:text-purple-400" />}
                           {rec.type === 'general' && <Brain className="h-3 w-3 text-gray-600 dark:text-gray-400" />}
@@ -962,17 +996,20 @@ function Dashboard() {
         {/* Spending by Category Table */}
         <Card data-tour="spending-table">
           <CardHeader>
-            <CardTitle>Spending by Category</CardTitle>
+            <CardTitle className="text-lg font-semibold text-gray-900 dark:text-gray-100" id="spending-category-title">Spending by Category</CardTitle>
           </CardHeader>
           <CardContent>
             {categorySpending.length > 0 ? (
               <div className="overflow-x-auto">
-                <Table className="text-sm">
+                <Table className="text-sm" aria-labelledby="spending-category-title">
+                  <caption className="sr-only">
+                    Spending breakdown by category showing category name, amount spent, and percentage of total spending
+                  </caption>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Category</TableHead>
-                      <TableHead align="right">Amount</TableHead>
-                      <TableHead align="right">Percentage</TableHead>
+                      <TableHead scope="col">Category</TableHead>
+                      <TableHead scope="col" className="text-right">Amount</TableHead>
+                      <TableHead scope="col" className="text-right">Percentage</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -991,11 +1028,15 @@ function Dashboard() {
                             <TableCell>
                               <CategoryPill category={categoryName} />
                             </TableCell>
-                            <TableCell align="right" className="font-semibold text-red-600 dark:text-red-400">
-                              {formatCurrency(amount)}
+                            <TableCell className="text-right font-semibold text-red-700 dark:text-red-300">
+                              <span aria-label={`Amount spent on ${categoryName}: ${formatCurrency(amount)}`}>
+                                {formatCurrency(amount)}
+                              </span>
                             </TableCell>
-                            <TableCell align="right" className="text-gray-600 dark:text-gray-400">
-                              {percentage.toFixed(1)}%
+                            <TableCell className="text-right text-gray-700 dark:text-gray-300">
+                              <span aria-label={`${percentage.toFixed(1)} percent of total spending`}>
+                                {percentage.toFixed(1)}%
+                              </span>
                             </TableCell>
                           </TableRow>
                         );
@@ -1037,11 +1078,11 @@ function Dashboard() {
                   const getStatusColor = (status) => {
                     switch (status) {
                       case 'on-track':
-                        return 'text-green-600 dark:text-green-400';
+                        return 'text-green-700 dark:text-green-300';
                       case 'warning':
-                        return 'text-yellow-600 dark:text-yellow-400';
+                        return 'text-yellow-700 dark:text-yellow-300';
                       case 'at-limit':
-                        return 'text-orange-600 dark:text-orange-400';
+                        return 'text-orange-700 dark:text-orange-400';
                       case 'over-budget':
                         return 'text-red-600 dark:text-red-400';
                       default:

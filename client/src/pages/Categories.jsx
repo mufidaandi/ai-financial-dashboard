@@ -119,7 +119,7 @@ function Categories() {
     <div className="p-6">
         <div className="flex justify-between items-center mb-4">
           <h1 className="text-2xl font-bold mb-4 dark:text-gray-100">Categories</h1>
-  <Button onClick={() => setShowModal(true)} className="dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-blue-300" data-tour="add-category">
+  <Button onClick={() => setShowModal(true)} className="dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-800 dark:focus:ring-blue-400" data-tour="add-category">
           Add Category
         </Button>
       </div>
@@ -153,7 +153,7 @@ function Categories() {
                   type="text"
                   value={editName}
                   onChange={e => setEditName(e.target.value)}
-                  className="bg-white dark:bg-gray-800 border border-blue-300 dark:border-blue-600 rounded-full px-3 py-1 text-sm outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
+                  className="bg-white dark:bg-gray-800 border border-blue-300 dark:border-blue-600 rounded-full px-3 py-1 text-sm outline-none focus:ring-2 focus:ring-blue-800 dark:focus:ring-blue-400"
                   required
                   autoFocus
                   style={{ width: `${Math.max(editName.length * 8, 100)}px` }}

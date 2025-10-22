@@ -89,7 +89,8 @@ function Sidebar({ children }) {
             </div>
             <button
               onClick={() => setSidebarOpen(false)}
-              className="md:hidden text-gray-500 dark:text-gray-300 hover:text-gray-700 dark:hover:text-white"
+              className="md:hidden text-gray-500 dark:text-gray-300 hover:text-gray-700 dark:hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-800 dark:focus:ring-blue-400 rounded p-1"
+              aria-label="Close sidebar"
             >
               ✕
             </button>
@@ -111,7 +112,7 @@ function Sidebar({ children }) {
                     item.name === "Transactions" ? "transactions-nav" :
                     undefined
                   }
-                  className={`flex items-center py-3 rounded-lg transition-colors ${collapsed ? "justify-center" : "px-4"
+                  className={`flex items-center py-3 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-800 dark:focus:ring-blue-400 ${collapsed ? "justify-center" : "px-4"
                     } ${isActive
                       ? "bg-blue-50 dark:bg-blue-900 text-blue-700 dark:text-blue-300 border-r-2 border-blue-700 dark:border-blue-300"
                       : "text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white"
@@ -145,7 +146,7 @@ function Sidebar({ children }) {
             <Link
               to="/profile"
               onClick={() => setSidebarOpen(false)}
-              className={`flex items-center py-2 px-3 mb-2 rounded-lg transition-colors ${
+              className={`flex items-center py-2 px-3 mb-2 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-800 dark:focus:ring-blue-400 ${
                 location.pathname === "/profile"
                   ? "bg-blue-50 dark:bg-blue-900 text-blue-700 dark:text-blue-300"
                   : "text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white"
@@ -163,7 +164,8 @@ function Sidebar({ children }) {
                 restartOnboarding();
                 setSidebarOpen(false);
               }}
-              className="flex items-center w-full py-2 px-3 mb-2 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white transition-colors"
+              className="flex items-center w-full py-2 px-3 mb-2 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white transition-colors focus:outline-none focus:ring-2 focus:ring-blue-800 dark:focus:ring-blue-400"
+              aria-label="Restart tutorial"
             >
               <span className="text-lg flex items-center justify-center">
                 <HelpCircle size={20} />
@@ -177,7 +179,8 @@ function Sidebar({ children }) {
                 logout();
                 setSidebarOpen(false);
               }}
-              className="flex items-center w-full py-2 px-3 rounded-lg text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-700 dark:hover:text-red-300 transition-colors"
+              className="flex items-center w-full py-2 px-3 mb-2 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 dark:hover:text-red-400 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-800 dark:focus:ring-blue-400"
+              aria-label="Logout"
             >
               <span className="text-lg flex items-center justify-center">
                 <LogOut size={20} />

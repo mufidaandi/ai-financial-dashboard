@@ -33,13 +33,13 @@ function Header({ theme, onThemeToggle }) {
           {/* Theme Toggle */}
           <button
             onClick={onThemeToggle}
-            className="p-2 rounded-lg text-gray-500 dark:bg-gray-800 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
-            title="Toggle dark/light theme"
+            className="p-2 rounded-lg text-gray-500 dark:bg-gray-800 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-700 dark:hover:text-gray-300 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-800 dark:focus:ring-blue-400"
+            aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
           >
             {theme === "dark" ? (
-              <Sun size={20} className="text-yellow-400" />
+              <Sun size={20} className="text-yellow-400" aria-hidden="true" />
             ) : (
-              <Moon size={20} />
+              <Moon size={20} aria-hidden="true" />
             )}
           </button>
 
@@ -47,18 +47,18 @@ function Header({ theme, onThemeToggle }) {
           <button
             disabled
             className="p-2 rounded-lg text-gray-400 dark:text-gray-600 dark:bg-gray-800 cursor-not-allowed"
-            title="Notifications (coming soon)"
+            aria-label="Notifications (coming soon)"
           >
-            <Bell size={20} />
+            <Bell size={20} aria-hidden="true" />
           </button>
 
           {/* Help/Tutorial Button */}
           <button
             onClick={restartOnboarding}
-            className="p-2 rounded-lg text-gray-500 dark:bg-gray-800 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
-            title="Restart Tutorial"
+            className="p-2 rounded-lg text-gray-500 dark:bg-gray-800 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-700 dark:hover:text-gray-300 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-800 dark:focus:ring-blue-400"
+            aria-label="Restart Tutorial"
           >
-            <HelpCircle size={20} />
+            <HelpCircle size={20} aria-hidden="true" />
           </button>
 
           {/* User Dropdown */}

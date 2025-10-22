@@ -6,7 +6,8 @@ import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "../components/ui/card";
-import API from "../api";
+import authService from "../services/authService";
+import { DEMO_DATA } from "../constants/uiConstants";
 
 function Login() {
   const { login } = useContext(AuthContext);
@@ -18,13 +19,16 @@ function Login() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const res = await API.post("/auth/login", {
+      // Use authService for consistent token handling
+      const data = await authService.login({
         email,
         password,
       });
 
-      // Use AuthContext login function to update both context and localStorage
-      login(res.data);
+      // Use AuthContext login function to update state
+      login(data);
+      
+      // Navigate to dashboard
       navigate("/dashboard");
     } catch (err) {
       console.error("Login error:", err.response?.data || err);
@@ -43,7 +47,7 @@ function Login() {
           <CardDescription className="text-center text-gray-400 dark:text-gray-300 mb-4 text-sm">Enter your email and password to access your dashboard.</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="text-sm text-gray-400 dark:text-gray-300 text-center mb-4">Test credentials: admin@test.com / admin</div>
+          <div className="text-sm text-gray-400 dark:text-gray-300 text-center mb-4">Test credentials: {DEMO_DATA.TEST_CREDENTIALS.EMAIL} / {DEMO_DATA.TEST_CREDENTIALS.PASSWORD}</div>
           <form onSubmit={handleSubmit} className="space-y-3">
             <Label htmlFor="email" className="text-m text-white dark:text-gray-200">Email</Label>
             <Input

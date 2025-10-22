@@ -364,7 +364,7 @@ function Settings() {
         {/* Regional Settings Section */}
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow p-6 lg:col-span-2">
           <div className="flex items-center gap-3 mb-6">
-            <Globe className="h-6 w-6 text-green-600 dark:text-green-400" />
+            <Globe className="h-6 w-6 text-green-700 dark:text-green-400" />
             <h2 className="text-xl font-semibold dark:text-gray-100">Regional Settings</h2>
           </div>
           

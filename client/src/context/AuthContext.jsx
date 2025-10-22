@@ -1,6 +1,7 @@
 import { createContext, useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { isTokenExpired } from "../utils/jwtUtils";
+import { tokenManager } from "../utils/tokenManager";
+import { AUTH_TIMEOUTS } from "../constants/timeConstants";
 
 export const AuthContext = createContext();
 
@@ -10,53 +11,91 @@ export const AuthProvider = ({ children }) => {
   
   const [user, setUser] = useState(() => {
     const stored = JSON.parse(localStorage.getItem("user")) || null;
-    // Handle both old format (flat) and new format (nested)
-    if (stored && stored.user) {
-      // New format: merge token with user data
-      return { ...stored.user, token: stored.token };
+    
+    // Handle backward compatibility with old token format
+    if (stored && stored.token && !stored.accessToken) {
+      // Old format - convert to new format
+      const converted = {
+        accessToken: stored.token,
+        refreshToken: null, // Will need to login again
+        user: stored.user || {
+          id: stored.id,
+          name: stored.name,
+          email: stored.email,
+          country: stored.country,
+          currency: stored.currency
+        }
+      };
+      localStorage.setItem("user", JSON.stringify(converted));
+      return converted.user;
     }
-    return stored;
+    
+    // New format
+    if (stored && stored.user) {
+      return stored.user;
+    }
+    
+    return stored?.user || null;
   });
 
-  // Global token expiration check
+  // Global token expiration check with automatic refresh
   useEffect(() => {
-    if (!user?.token) return;
+    if (!user) return;
 
-    // Check if current token is expired
-    if (isTokenExpired(user.token)) {
-      logout();
-      return;
-    }
+    const checkAndRefreshToken = async () => {
+      try {
+        // Check if refresh token is expired
+        if (tokenManager.isRefreshTokenExpired()) {
+          logout();
+          return;
+        }
 
-    // Set up periodic check for token expiration
-    const checkToken = () => {
-      if (user?.token && isTokenExpired(user.token)) {
+        // If access token is expired, try to refresh
+        if (tokenManager.isAccessTokenExpired()) {
+          await tokenManager.refreshAccessToken();
+        }
+      } catch (error) {
+        console.error('Token refresh failed:', error);
         logout();
       }
     };
 
-    // Check every minute
-    const interval = setInterval(checkToken, 60000);
+    // Check immediately
+    checkAndRefreshToken();
+
+    // Set up periodic check every 5 minutes
+    const interval = setInterval(checkAndRefreshToken, AUTH_TIMEOUTS.TOKEN_REFRESH_CHECK);
     return () => clearInterval(interval);
-  }, [user?.token]);
+  }, [user]);
 
   const login = (data) => {
     let userData;
-    // Handle both response formats
-    if (data.user) {
-      // New format: merge token with user data
-      userData = { ...data.user, token: data.token };
+    
+    // Handle new token format with accessToken and refreshToken
+    if (data.accessToken && data.refreshToken) {
+      userData = data.user;
+      tokenManager.setTokens(data.accessToken, data.refreshToken, data.user);
+    } else if (data.user && data.token) {
+      // Old format - store for backward compatibility
+      userData = data.user;
+      const legacyData = {
+        accessToken: data.token,
+        refreshToken: null,
+        user: data.user
+      };
+      localStorage.setItem("user", JSON.stringify(legacyData));
     } else {
-      // Old format: data is already flat
-      userData = data;
+      // Fallback
+      userData = data.user || data;
+      localStorage.setItem("user", JSON.stringify(data));
     }
+    
     setUser(userData);
-    localStorage.setItem("user", JSON.stringify(data)); // Store original format
   };
 
   const logout = () => {
     setUser(null);
-    localStorage.removeItem("user");
+    tokenManager.clearTokens();
     // Only redirect if not already on public pages
     if (location.pathname !== '/' && location.pathname !== '/register') {
       navigate('/', { replace: true });

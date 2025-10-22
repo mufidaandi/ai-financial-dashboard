@@ -71,16 +71,16 @@ function Insights() {
     const getPriorityColor = (priority) => {
         switch (priority) {
             case 'high': return 'text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800';
-            case 'medium': return 'text-yellow-600 dark:text-yellow-400 bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800';
+            case 'medium': return 'text-yellow-700 dark:text-yellow-400 bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800';
             case 'low': return 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800';
             default: return 'text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-900/20 border-gray-200 dark:border-gray-800';
         }
     };
 
     const getHealthColor = (score) => {
-        if (score >= 80) return 'text-green-600 dark:text-green-400';
+        if (score >= 80) return 'text-green-700 dark:text-green-400';
         if (score >= 60) return 'text-blue-600 dark:text-blue-400';
-        if (score >= 40) return 'text-yellow-600 dark:text-yellow-400';
+        if (score >= 40) return 'text-yellow-700 dark:text-yellow-400';
         return 'text-red-600 dark:text-red-400';
     };
 
@@ -195,7 +195,7 @@ function Insights() {
                             <div className="text-sm text-gray-600 dark:text-gray-400">Daily Average</div>
                         </div>
                         <div className="text-center">
-                            <div className={`text-2xl font-bold ${insights.trends.spendingTrend === 'increasing' ? 'text-red-600' : insights.trends.spendingTrend === 'decreasing' ? 'text-green-600' : 'text-blue-600'}`}>
+                            <div className={`text-2xl font-bold ${insights.trends.spendingTrend === 'increasing' ? 'text-red-600' : insights.trends.spendingTrend === 'decreasing' ? 'text-green-700' : 'text-blue-600'}`}>
                                 {insights.trends.spendingTrend === 'increasing' ? '↑' : insights.trends.spendingTrend === 'decreasing' ? '↓' : '→'}
                                 {Math.abs(insights.trends.trendPercentage).toFixed(1)}%
                             </div>

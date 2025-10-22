@@ -277,7 +277,7 @@ function Accounts() {
 
   const handleUpdate = async (e) => {
     e.preventDefault();
-    
+
     if (editForm.type === "Credit Card") {
       if (!editForm.creditLimit || !editForm.statementDate || !editForm.dueDate) {
         error("Credit limit, statement date, and due date are required for Credit Card accounts");
@@ -458,7 +458,7 @@ function Accounts() {
           <Button onClick={() => setShowTransferModal(true)} variant="outline" className="dark:border-gray-700">
             Transfer
           </Button>
-          <Button onClick={() => setShowModal(true)} className="dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-blue-300" data-tour="add-account">
+          <Button onClick={() => setShowModal(true)} className="dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-800 dark:focus:ring-blue-400" data-tour="add-account">
             Add Account
           </Button>
         </div>
@@ -508,6 +508,23 @@ function Accounts() {
                 placeholder="0.00" 
                 required 
               />
+              <div className="mt-2 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                <div className="flex items-start space-x-2">
+                  <div className="flex-shrink-0 mt-0.5">
+                    <svg className="h-4 w-4 text-blue-600 dark:text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="text-sm text-blue-800 dark:text-blue-200 font-medium">
+                      💡 How Account Balance Works
+                    </p>
+                    <p className="text-xs text-blue-700 dark:text-blue-300 mt-1">
+                      Enter your current account balance as of today. Going forward, your balance will be automatically updated when you add income, expenses, or transfers.
+                    </p>
+                  </div>
+                </div>
+              </div>
             </div>
           )}
 
@@ -665,7 +682,7 @@ function Accounts() {
                       <div className="w-full mb-2">
                         <label className="block text-sm font-medium mb-1 dark:text-gray-100">Current Balance</label>
                         <div className="px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md">
-                          <span className="text-lg font-semibold text-green-600 dark:text-green-400">
+                          <span className="text-lg font-semibold text-green-700 dark:text-green-400">
                             ${(acc.balance || 0).toFixed(2)}
                           </span>
                           <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
@@ -731,7 +748,7 @@ function Accounts() {
                     {(acc.type === "Savings" || acc.type === "Checking") && (
                       <div className="w-full mb-2">
                         <span className="text-sm text-gray-500 dark:text-gray-400">Current Balance</span>
-                        <p className="text-lg font-semibold text-green-600 dark:text-green-400">
+                        <p className="text-lg font-semibold text-green-700 dark:text-green-400">
                           ${(acc.balance || 0).toFixed(2)}
                         </p>
                       </div>
@@ -798,7 +815,7 @@ function Accounts() {
                         <Button 
                           onClick={() => handlePayCard(acc)} 
                           variant="ghost" 
-                          className="border-none p-1 text-green-600 dark:text-green-400" 
+                          className="border-none p-1 text-green-700 dark:text-green-400" 
                           title="Pay Card"
                         >
                           <CreditCard size={18} />

@@ -121,7 +121,6 @@ export const OnboardingProvider = ({ children }) => {
       try {
         // Only initialize if user is authenticated
         if (!user?.id) {
-          console.log('No authenticated user, skipping onboarding initialization');
           setIsLoading(false);
           setIsFirstTimeUser(false); // Reset to false when no user
           return;
@@ -130,9 +129,6 @@ export const OnboardingProvider = ({ children }) => {
         const userId = user.id;
 
         if (useDatabase) {
-          // Try to sync with database first
-          console.log('Syncing onboarding state with database for user:', userId);
-          
           try {
             const dbState = await onboardingService.syncWithLocalStorage();
             

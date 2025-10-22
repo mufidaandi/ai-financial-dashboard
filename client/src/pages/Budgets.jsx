@@ -164,11 +164,11 @@ function Budgets() {
     const getStatusColor = (status) => {
         switch (status) {
             case 'on-track':
-                return 'text-green-600 dark:text-green-400';
+                return 'text-green-700 dark:text-green-400';
             case 'warning':
-                return 'text-yellow-600 dark:text-yellow-400';
+                return 'text-yellow-700 dark:text-yellow-400';
             case 'at-limit':
-                return 'text-orange-600 dark:text-orange-400';
+                return 'text-orange-700 dark:text-orange-400';
             case 'over-budget':
                 return 'text-red-600 dark:text-red-400';
             default:
@@ -254,7 +254,7 @@ function Budgets() {
                         </CardHeader>
                         <CardContent className="pt-0">
                             <div className="flex items-center gap-2">
-                                <p className="text-2xl font-bold text-orange-600 dark:text-orange-400">
+                                <p className="text-2xl font-bold text-orange-700 dark:text-orange-400">
                                     {formatCurrency(budgetProgress.reduce((sum, bp) => sum + bp.totalSpent, 0))}
                                 </p>
                             </div>
@@ -269,7 +269,7 @@ function Budgets() {
                         </CardHeader>
                         <CardContent className="pt-0">
                             <div className="flex items-center gap-2">
-                                <p className="text-2xl font-bold text-green-600 dark:text-green-400">
+                                <p className="text-2xl font-bold text-green-700 dark:text-green-400">
                                     {formatCurrency(budgetProgress.reduce((sum, bp) => sum + bp.remaining, 0))}
                                 </p>
                             </div>
@@ -456,7 +456,7 @@ function Budgets() {
                                                         <span className="text-sm text-gray-600 dark:text-gray-400">Remaining</span>
                                                         <span className={`font-semibold ${
                                                             existingBudget.remaining > 0 
-                                                                ? 'text-green-600 dark:text-green-400' 
+                                                                ? 'text-green-700 dark:text-green-400' 
                                                                 : 'text-red-600 dark:text-red-400'
                                                         }`}>
                                                             {formatCurrency(existingBudget.remaining)}
@@ -474,7 +474,7 @@ function Budgets() {
                                                     <p className="text-gray-500 dark:text-gray-400 text-sm mb-3">
                                                         No budget set for this category
                                                     </p>
-                                                    <p className="text-gray-400 dark:text-gray-500 text-xs">
+                                                    <p className="text-gray-400 dark:text-gray-200 text-xs">
                                                         Click "Add Budget" to start tracking spending
                                                     </p>
                                                 </div>
