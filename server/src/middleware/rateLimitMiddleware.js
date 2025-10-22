@@ -27,6 +27,15 @@ const createRateLimiter = (config, options = {}) => {
     },
     standardHeaders: true,
     legacyHeaders: false,
+    // Use IP address from X-Forwarded-For header when behind proxy
+    keyGenerator: (req) => {
+      // Get real IP address (works with proxies like Vercel)
+      const ip = req.ip || 
+                 req.connection.remoteAddress || 
+                 req.socket.remoteAddress || 
+                 (req.connection.socket ? req.connection.socket.remoteAddress : null);
+      return ip;
+    },
     handler: (req, res) => {
       res.status(429).json({
         error: errorMessage,

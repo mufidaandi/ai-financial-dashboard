@@ -20,6 +20,10 @@ dotenv.config();
 
 const app = express();
 
+// Trust proxy - CRITICAL for deployment on Vercel/other cloud platforms
+// This allows Express to correctly read X-Forwarded-For headers
+app.set('trust proxy', true);
+
 // Initialize database connection without await at top level
 connectDB().catch(err => {
   console.error('Database connection failed:', err.message);
