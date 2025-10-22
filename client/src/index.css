@@ -2,7 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-
 :root {
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
@@ -20,13 +19,26 @@
 
 button, input, optgroup, select, textarea {
   font-family: inherit;
-  color:#213547;
+  color: #213547;
   font-size: 100%;
   line-height: 1.15;
   margin: 0;
   background-color: #fff;
 }
 
+/* Date input styling for dark mode */
+.dark input[type="date"]::-webkit-calendar-picker-indicator:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: #f3f4f6;
+}
+
+/* Firefox date input styling */
+input[type="date"]::-moz-calendar-picker-indicator {
+  opacity: 1;
+  cursor: pointer;
+  width: 20px;
+  height: 20px;
+}
 
 a {
   font-weight: 500;
@@ -63,7 +75,27 @@ button:hover {
 }
 button:focus,
 button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
+  outline: 2px solid #1e40af; /* blue-800 - high contrast blue */
+  outline-offset: 2px;
+}
+
+/* Global focus styles for accessibility */
+*:focus-visible {
+  outline: 2px solid #1e40af !important; /* blue-800 - high contrast */
+  outline-offset: 2px !important;
+  border-radius: 4px;
+}
+
+/* Dark mode focus styles */
+@media (prefers-color-scheme: dark) {
+  *:focus-visible {
+    outline-color: #60a5fa !important; /* blue-400 - accessible in dark mode */
+  }
+}
+
+/* Specific dark mode class support */
+.dark *:focus-visible {
+  outline-color: #60a5fa !important; /* blue-400 - accessible in dark mode */
 }
 
 @media (prefers-color-scheme: light) {
@@ -78,20 +110,4 @@ button:focus-visible {
   button {
     background-color: #f9f9f9;
   }
-}
-
-/* Animations for notifications */
-@keyframes slide-up {
-  from {
-    transform: translateY(100%);
-    opacity: 0;
-  }
-  to {
-    transform: translateY(0);
-    opacity: 1;
-  }
-}
-
-.animate-slide-up {
-  animation: slide-up 0.3s ease-out;
 }

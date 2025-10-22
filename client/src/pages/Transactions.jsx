@@ -11,10 +11,12 @@ import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Select } from "../components/ui/select";
 import { CustomSelect, CustomSelectItem } from "../components/ui/custom-select";
+import { CustomDatePicker } from "../components/ui/CustomDatePicker";
 import { Modal } from "../components/ui/modal";
 import { DataTable, TableBadge, TableActions } from "../components/ui/table";
 import { CategoryPill, TypePill } from "../components/ui/pill";
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
+import { FORM_MESSAGES } from "../constants/uiConstants";
 
 function Transactions() {
     const { success, error } = useToast();
@@ -318,7 +320,10 @@ function Transactions() {
             
             // Auto-apply if high confidence and category exists
             if (suggestion.confidence === "high" && suggestion.suggestedCategory) {
-                setForm({ ...form, category: suggestion.suggestedCategory._id });
+                setForm(prevForm => ({ 
+                    ...prevForm, 
+                    category: suggestion.suggestedCategory._id 
+                }));
             }
         } catch (error) {
             console.error("AI suggestion error:", error);
@@ -345,7 +350,10 @@ function Transactions() {
                 
                 // Auto-apply if high confidence and category exists
                 if (suggestion.confidence === "high" && suggestion.suggestedCategory) {
-                    setForm({ ...form, category: suggestion.suggestedCategory._id });
+                    setForm(prevForm => ({ 
+                        ...prevForm, 
+                        category: suggestion.suggestedCategory._id 
+                    }));
                 }
             } catch (error) {
                 console.error("Auto AI suggestion error:", error);
@@ -358,7 +366,7 @@ function Transactions() {
 
     const applySuggestion = () => {
         if (aiSuggestion?.suggestedCategory) {
-            setForm({ ...form, category: aiSuggestion.suggestedCategory._id });
+            setForm(prevForm => ({ ...prevForm, category: aiSuggestion.suggestedCategory._id }));
             setAiSuggestion(null);
         }
     };
@@ -571,7 +579,7 @@ function Transactions() {
                 <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 items-stretch sm:items-center">
                     {/* Search Field */}
                     <div className="relative">
-                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 h-4 w-4" />
                         <Input
                             type="text"
                             placeholder="Search transactions"
@@ -589,7 +597,7 @@ function Transactions() {
                         <Filter className="h-4 w-4" />
                         {showFilters ? 'Hide Filters' : 'Show Filters'}
                     </Button>
-                    <Button onClick={() => setShowModal(true)} className="dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-blue-300" data-tour="add-transaction">
+                    <Button onClick={() => setShowModal(true)} className="dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-800 dark:focus:ring-blue-400" data-tour="add-transaction">
                         Add Transaction
                     </Button>
                 </div>
@@ -711,11 +719,19 @@ function Transactions() {
             {/* Modal for Add Transaction */}
             <Modal open={showModal} onClose={closeModal}>
                 <h2 className="text-xl font-bold mb-4 dark:text-gray-100">Add Transaction</h2>
+                <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                    <p className="text-sm text-blue-800 dark:text-blue-200 flex items-center gap-2">
+                        <span className="text-red-500 font-semibold" aria-label="Required field indicator">
+                            {FORM_MESSAGES.REQUIRED_INDICATOR}
+                        </span>
+                        {FORM_MESSAGES.REQUIRED_FIELDS_NOTICE}
+                    </p>
+                </div>
                 <form onSubmit={handleAdd} className="flex flex-col gap-4">
                     {/* Tab-style type selector */}
                     <div>
                         <label className="block text-sm font-medium mb-2 dark:text-gray-100">
-                            Type <span className="text-red-500">*</span>
+                            Type <span className="text-red-500" aria-label="Required field">{FORM_MESSAGES.REQUIRED_INDICATOR}</span>
                         </label>
                         <div className="grid grid-cols-3 gap-2">
                             <button
@@ -744,21 +760,27 @@ function Transactions() {
                     
                     <div>
                         <label className="block text-sm font-medium mb-1 dark:text-gray-100">
-                            Date <span className="text-red-500">*</span>
+                            Date <span className="text-red-500" aria-label="Required field">{FORM_MESSAGES.REQUIRED_INDICATOR}</span>
                         </label>
-                        <Input name="date" type="date" value={form.date} onChange={handleChange} required />
+                        <CustomDatePicker 
+                            name="date"
+                            value={form.date} 
+                            onChange={handleChange}
+                            placeholder="Select date"
+                            required 
+                        />
                     </div>
                     
                     <div>
                         <label className="block text-sm font-medium mb-1 dark:text-gray-100">
-                            Description <span className="text-red-500">*</span>
+                            Description <span className="text-red-500" aria-label="Required field">{FORM_MESSAGES.REQUIRED_INDICATOR}</span>
                         </label>
-                        <Input name="description" type="text" value={form.description} onChange={handleChange} onBlur={handleDescriptionBlur} placeholder="e.g., Grocery shopping, Gas station, Salary deposit" required />
+                        <Input name="description" type="text" value={form.description} onChange={handleChange} onBlur={handleDescriptionBlur} placeholder={FORM_MESSAGES.HELP_TEXT.DESCRIPTION} required />
                     </div>
                     
                     <div>
                         <label className="block text-sm font-medium mb-1 dark:text-gray-100">
-                            Amount <span className="text-red-500">*</span>
+                            Amount <span className="text-red-500" aria-label="Required field">{FORM_MESSAGES.REQUIRED_INDICATOR}</span>
                         </label>
                         <Input name="amount" type="number" value={form.amount} onChange={handleChange} placeholder="0.00" step="0.01" min="0" required />
                     </div>
@@ -837,7 +859,7 @@ function Transactions() {
                         <>
                             <div>
                                 <label className="block text-sm font-medium mb-1 dark:text-gray-100">
-                                    From Account <span className="text-red-500">*</span>
+                                    From Account <span className="text-red-500" aria-label="Required field">{FORM_MESSAGES.REQUIRED_INDICATOR}</span>
                                 </label>
                                 <CustomSelect
                                     value={form.fromAccount}
@@ -851,7 +873,7 @@ function Transactions() {
                             </div>
                             <div>
                                 <label className="block text-sm font-medium mb-1 dark:text-gray-100">
-                                    To Account <span className="text-red-500">*</span>
+                                    To Account <span className="text-red-500" aria-label="Required field">{FORM_MESSAGES.REQUIRED_INDICATOR}</span>
                                 </label>
                                 <CustomSelect
                                     value={form.toAccount}
@@ -867,7 +889,7 @@ function Transactions() {
                     ) : (
                         <div>
                             <label className="block text-sm font-medium mb-1 dark:text-gray-100">
-                                Account <span className="text-red-500">*</span>
+                                Account <span className="text-red-500" aria-label="Required field">{FORM_MESSAGES.REQUIRED_INDICATOR}</span>
                             </label>
                             <CustomSelect
                                 value={form.account}
@@ -913,7 +935,11 @@ function Transactions() {
                             sortable: true,
                             render: (value, row) => {
                                 if (editId === row._id) {
-                                    return <Input name="date" type="date" value={editForm.date?.slice(0, 10)} onChange={handleEditChange} />;
+                                    return <CustomDatePicker 
+                                        value={editForm.date?.slice(0, 10)} 
+                                        onChange={(e) => setEditForm({...editForm, date: e.target.value})} 
+                                        placeholder="Select date"
+                                    />;
                                 }
                                 return value?.slice(0, 10);
                             }
@@ -987,13 +1013,13 @@ function Transactions() {
                                     colorClass = 'text-red-600 dark:text-red-400';
                                 } else if (row.type === 'income') {
                                     prefix = '+';
-                                    colorClass = 'text-green-600 dark:text-green-400';
+                                    colorClass = 'text-green-700 dark:text-green-400';
                                 } else if (row.type === 'transfer') {
                                     // For transfers, show negative for outgoing (from account) and positive for incoming (to account)
                                     if (row.description && row.description.includes('Transfer to')) {
                                         // This is the outgoing transfer (from account)
                                         prefix = '-';
-                                        colorClass = 'text-orange-600 dark:text-orange-400';
+                                        colorClass = 'text-orange-700 dark:text-orange-400';
                                     } else if (row.description && row.description.includes('Transfer from')) {
                                         // This is the incoming transfer (to account)
                                         prefix = '+';

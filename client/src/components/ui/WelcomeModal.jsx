@@ -58,7 +58,7 @@ const WelcomeModal = () => {
           
           <div className="flex items-center space-x-3">
             <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
-              <span className="text-green-600 text-sm">🎯</span>
+              <span className="text-green-700 text-sm">🎯</span>
             </div>
             <div>
               <p className="text-sm font-medium text-gray-900">Smart Budgeting</p>

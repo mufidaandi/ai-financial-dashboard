@@ -35,18 +35,23 @@ export const Toast = ({ message, type = 'info', duration = 4000, onClose }) => {
   const getIcon = () => {
     switch (type) {
       case 'success':
-        return <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400" />;
+        return <CheckCircle className="h-5 w-5 text-green-700 dark:text-green-400" />;
       case 'error':
         return <AlertCircle className="h-5 w-5 text-red-600 dark:text-red-400" />;
       case 'warning':
-        return <AlertTriangle className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />;
+        return <AlertTriangle className="h-5 w-5 text-yellow-700 dark:text-yellow-400" />;
       default:
         return <Info className="h-5 w-5 text-blue-600 dark:text-blue-400" />;
     }
   };
 
   return (
-    <div className={getToastStyles()}>
+    <div 
+      className={getToastStyles()}
+      role="alert"
+      aria-live="polite"
+      aria-atomic="true"
+    >
       {getIcon()}
       <div className="flex-1 text-sm font-medium">
         {message}
@@ -56,9 +61,10 @@ export const Toast = ({ message, type = 'info', duration = 4000, onClose }) => {
           setIsVisible(false);
           setTimeout(onClose, 300);
         }}
-        className="p-0 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+        className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-800 dark:focus:ring-blue-400 rounded"
+        aria-label="Dismiss notification"
       >
-        <X className="h-4 w-4" />
+        <X className="h-4 w-4" aria-hidden="true" />
       </button>
     </div>
   );
