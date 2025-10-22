@@ -1,7 +1,6 @@
-<div align="center">
-  <img src="client/public/logo-icon.png" alt="ExpenSure Logo" width="120" height="120">
-  <h1>ExpenSure 💰</h1>
-  <p><em>AI Financial Dashboard</em></p>
+<div>
+  <img src="client/public/dark-mode.png" alt="ExpenSure Logo" height="80">
+  <h1>AI Financial Dashboard 💰</h1>
 </div>
 
 A comprehensive personal finance management application with AI-powered insights and recommendations. Track your expenses, manage accounts, and get intelligent financial advice powered by Google's Gemini AI.
