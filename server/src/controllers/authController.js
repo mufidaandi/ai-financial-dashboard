@@ -1,6 +1,7 @@
 import User from "../models/User.js";
 import bcrypt from "bcryptjs"; // Changed to bcryptjs to match routes
 import jwt from "jsonwebtoken";
+import { generateTokenPair, createUserResponse, generateTempToken, hashPassword } from "../utils/jwtUtils.js";
 
 export const registerUser = async (req, res) => {
   try {
@@ -13,8 +14,7 @@ export const registerUser = async (req, res) => {
     }
 
     // Hash password
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(password, salt);
+    const hashedPassword = await hashPassword(password);
 
     // Create new user with onboarding state
     const newUser = new User({ 
@@ -33,20 +33,13 @@ export const registerUser = async (req, res) => {
     });
     await newUser.save();
 
-    // Generate token
-    const token = jwt.sign({ id: newUser._id }, process.env.JWT_SECRET, {
-      expiresIn: "1h",
-    });
+    // Generate tokens
+    const { accessToken, refreshToken } = generateTokenPair(newUser._id);
 
     res.status(201).json({
-      token,
-      user: { 
-        id: newUser._id, 
-        name: newUser.name, 
-        email: newUser.email,
-        country: newUser.country,
-        currency: newUser.currency 
-      },
+      accessToken,
+      refreshToken,
+      user: createUserResponse(newUser),
     });
   } catch (err) {
     res.status(500).json({ message: "Server error registering user" });
@@ -69,20 +62,13 @@ export const loginUser = async (req, res) => {
       return res.status(400).json({ message: "Invalid credentials" });
     }
 
-    // Generate token
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
-      expiresIn: "1h",
-    });
+    // Generate tokens
+    const { accessToken, refreshToken } = generateTokenPair(user._id);
 
     res.json({
-      token,
-      user: { 
-        id: user._id, 
-        name: user.name, 
-        email: user.email,
-        country: user.country,
-        currency: user.currency 
-      },
+      accessToken,
+      refreshToken,
+      user: createUserResponse(user),
     });
   } catch (err) {
     console.error('Login error:', err);
@@ -164,8 +150,7 @@ export const changePassword = async (req, res) => {
     }
 
     // Hash new password
-    const salt = await bcrypt.genSalt(10);
-    const hashedNewPassword = await bcrypt.hash(newPassword, salt);
+    const hashedNewPassword = await hashPassword(newPassword);
 
     // Update password
     await User.findByIdAndUpdate(userId, { password: hashedNewPassword });
@@ -179,20 +164,37 @@ export const changePassword = async (req, res) => {
 
 export const refreshToken = async (req, res) => {
   try {
-    // User is already verified by the auth middleware
-    const userId = req.user._id;
+    const { refreshToken } = req.body;
 
-    // Generate new token with extended expiration
-    const newToken = jwt.sign({ id: userId }, process.env.JWT_SECRET, {
-      expiresIn: "1h",
-    });
+    if (!refreshToken) {
+      return res.status(401).json({ message: "Refresh token is required" });
+    }
+
+    // Verify refresh token
+    const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET);
+    
+    // Find user to ensure they still exist
+    const user = await User.findById(decoded.id).select("-password");
+    if (!user) {
+      return res.status(401).json({ message: "User not found" });
+    }
+
+    // Generate new tokens
+    const { accessToken: newAccessToken, refreshToken: newRefreshToken } = generateTokenPair(user._id);
 
     res.json({
-      token: newToken,
-      message: "Token refreshed successfully"
+      accessToken: newAccessToken,
+      refreshToken: newRefreshToken,
+      user: createUserResponse(user)
     });
   } catch (err) {
     console.error("Error refreshing token:", err);
+    if (err.name === 'JsonWebTokenError') {
+      return res.status(401).json({ message: "Invalid refresh token" });
+    }
+    if (err.name === 'TokenExpiredError') {
+      return res.status(401).json({ message: "Refresh token expired" });
+    }
     res.status(500).json({ message: "Server error refreshing token" });
   }
 };
@@ -216,28 +218,19 @@ export const forgotPassword = async (req, res) => {
     }
 
     // Hash new password
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(newPassword, salt);
+    const hashedPassword = await hashPassword(newPassword);
 
     // Update password
     user.password = hashedPassword;
     await user.save();
 
     // Create JWT token for immediate login
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
-      expiresIn: "1h",
-    });
+    const token = generateTempToken(user._id);
 
     res.json({ 
       message: "Password reset successfully",
       token,
-      user: { 
-        id: user._id, 
-        name: user.name, 
-        email: user.email,
-        country: user.country,
-        currency: user.currency 
-      }
+      user: createUserResponse(user)
     });
   } catch (err) {
     console.error("Forgot password error:", err);

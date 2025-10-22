@@ -8,6 +8,12 @@ import categoryRoutes from "./routes/categoryRoutes.js";
 import accountRoutes from "./routes/accountRoutes.js";
 import aiRoutes from "./routes/aiRoutes.js";
 import budgetRoutes from "./routes/budgetRoutes.js";
+import { 
+  generalLimiter, 
+  authLimiter, 
+  apiLimiter, 
+  strictLimiter 
+} from "./middleware/rateLimitMiddleware.js";
 
 
 dotenv.config();
@@ -21,7 +27,8 @@ connectDB().catch(err => {
 
 // Configure CORS with specific options
 const allowedOrigins = [
-  'http://localhost:5173', // Local development
+  'http://localhost:5173', // Local development (original)
+  'http://localhost:5174', // Local development (alternative port)
   'https://expensure.vercel.app', // Production frontend,
   'https://ai-financial-dashboard.vercel.app'
 ];
@@ -42,14 +49,26 @@ app.use(cors({
 
 app.use(express.json());
 
+// Health check endpoint (before rate limiting)
+app.get("/health", (req, res) => {
+  res.status(200).json({ 
+    status: "OK", 
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime() 
+  });
+});
+
+// Apply general rate limiting to all requests
+app.use(generalLimiter);
+
 // Routes
 
-app.use("/api/auth", authRoutes);
-app.use("/api/transactions", transactionRoutes);
-app.use("/api/categories", categoryRoutes);
-app.use("/api/accounts", accountRoutes);
-app.use("/api/ai", aiRoutes);
-app.use("/api/budgets", budgetRoutes);
+app.use("/api/auth", authLimiter, authRoutes);
+app.use("/api/transactions", apiLimiter, transactionRoutes);
+app.use("/api/categories", apiLimiter, categoryRoutes);
+app.use("/api/accounts", apiLimiter, accountRoutes);
+app.use("/api/ai", strictLimiter, aiRoutes);
+app.use("/api/budgets", apiLimiter, budgetRoutes);
 
 // Global error handler
 app.use((error, req, res, next) => {

@@ -171,23 +171,44 @@ Rules:
             });
 
         } catch (geminiError) {
-            console.error("Gemini AI failed:", geminiError.message);
+            console.error("Gemini AI failed:", geminiError.message || geminiError);
             
-            // Provide helpful error messages
-            if (geminiError.message.includes("API key not valid")) {
+            // Handle different types of errors with appropriate fallbacks
+            if (geminiError.message?.includes("API key not valid")) {
                 return res.status(500).json({ 
                     message: "Invalid API key. Please check your Google AI Studio API key.",
                     error: "API_KEY_INVALID"
                 });
-            } else if (geminiError.message.includes("404") || geminiError.message.includes("not found")) {
+            } else if (geminiError.message?.includes("404") || geminiError.message?.includes("not found")) {
                 return res.status(500).json({ 
                     message: "Model not available. Please check API key permissions.",
                     error: "MODEL_NOT_FOUND"
                 });
+            } else if (geminiError.message?.includes("overloaded") || geminiError.message?.includes("503") || geminiError.message?.includes("UNAVAILABLE")) {
+                // Gemini is overloaded - provide intelligent fallback
+                console.log("Gemini overloaded, using fallback categorization");
+                
+                const fallbackResult = performFallbackCategorization(description, userCategories);
+                
+                return res.json({
+                    suggestedCategory: fallbackResult.category,
+                    confidence: "medium",
+                    reason: "AI service busy - used pattern matching",
+                    fallback: true,
+                    description
+                });
             } else {
-                return res.status(500).json({ 
-                    message: "AI categorization failed", 
-                    error: geminiError.message 
+                // For other errors, provide fallback
+                console.log("Gemini error, using fallback categorization");
+                
+                const fallbackResult = performFallbackCategorization(description, userCategories);
+                
+                return res.json({
+                    suggestedCategory: fallbackResult.category,
+                    confidence: "low",
+                    reason: "AI service unavailable - used basic matching", 
+                    fallback: true,
+                    description
                 });
             }
         }
@@ -697,4 +718,76 @@ Rules:
         });
     }
 };
+
+// Fallback categorization function when Gemini AI is unavailable
+function performFallbackCategorization(description, userCategories) {
+    if (!description || !userCategories || userCategories.length === 0) {
+        return { category: null };
+    }
+
+    const desc = description.toLowerCase().trim();
+    
+    // Common keyword mappings for fallback categorization
+    const keywordMappings = {
+        'grocery': ['grocery', 'groceries', 'supermarket', 'walmart', 'target', 'costco', 'safeway', 'kroger', 'food', 'market'],
+        'groceries': ['grocery', 'groceries', 'supermarket', 'walmart', 'target', 'costco', 'safeway', 'kroger', 'food', 'market'],
+        'dining': ['restaurant', 'dining', 'food', 'pizza', 'burger', 'cafe', 'coffee', 'starbucks', 'mcdonald', 'subway', 'chipotle', 'takeout', 'delivery'],
+        'food': ['restaurant', 'dining', 'food', 'pizza', 'burger', 'cafe', 'coffee', 'starbucks', 'mcdonald', 'subway', 'chipotle', 'takeout', 'delivery'],
+        'transportation': ['gas', 'fuel', 'uber', 'lyft', 'taxi', 'bus', 'train', 'metro', 'parking', 'toll', 'car', 'vehicle', 'transport'],
+        'utilities': ['electric', 'electricity', 'water', 'gas', 'internet', 'wifi', 'phone', 'cell', 'utility', 'bill', 'energy'],
+        'entertainment': ['movie', 'cinema', 'netflix', 'spotify', 'gaming', 'game', 'entertainment', 'fun', 'hobby', 'subscription'],
+        'healthcare': ['doctor', 'medical', 'hospital', 'pharmacy', 'medicine', 'health', 'dental', 'clinic', 'insurance'],
+        'shopping': ['shopping', 'store', 'mall', 'amazon', 'online', 'purchase', 'buy', 'clothing', 'clothes', 'electronics'],
+        'education': ['school', 'education', 'book', 'course', 'learning', 'tuition', 'class', 'training', 'study'],
+        'insurance': ['insurance', 'premium', 'policy', 'coverage', 'auto', 'health', 'life', 'home'],
+        'personal care': ['haircut', 'salon', 'beauty', 'cosmetics', 'gym', 'fitness', 'spa', 'personal', 'care']
+    };
+
+    // Try to find a matching category
+    for (const userCategory of userCategories) {
+        const categoryNameLower = userCategory.name.toLowerCase();
+        
+        // Direct match - if description contains category name
+        if (desc.includes(categoryNameLower)) {
+            return {
+                category: {
+                    _id: userCategory._id,
+                    name: userCategory.name
+                }
+            };
+        }
+        
+        // Keyword matching - check if category has associated keywords
+        const keywords = keywordMappings[categoryNameLower] || [];
+        for (const keyword of keywords) {
+            if (desc.includes(keyword)) {
+                return {
+                    category: {
+                        _id: userCategory._id,
+                        name: userCategory.name
+                    }
+                };
+            }
+        }
+        
+        // Reverse keyword matching - check if description matches any keyword that maps to this category
+        for (const [mappedCategory, mappedKeywords] of Object.entries(keywordMappings)) {
+            if (mappedKeywords.includes(categoryNameLower)) {
+                for (const keyword of mappedKeywords) {
+                    if (desc.includes(keyword)) {
+                        return {
+                            category: {
+                                _id: userCategory._id,
+                                name: userCategory.name
+                            }
+                        };
+                    }
+                }
+            }
+        }
+    }
+
+    // No match found
+    return { category: null };
+}
 

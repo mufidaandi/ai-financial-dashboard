@@ -1,86 +1,24 @@
 import Transaction from "../models/Transaction.js";
 import Category from "../models/Category.js";
 import Account from "../models/Account.js";
-
-// Helper function to get or create default categories
-const getOrCreateDefaultCategory = async (userId, categoryName) => {
-  let category = await Category.findOne({ user: userId, name: categoryName });
-  if (!category) {
-    category = await Category.create({ user: userId, name: categoryName });
-  }
-  return category._id;
-};
-
-// Helper function to update account balance
-const updateAccountBalance = async (accountId, amount) => {
-  if (!accountId) return;
-  
-  const account = await Account.findById(accountId);
-  if (!account || (account.type !== "Savings" && account.type !== "Checking")) {
-    return; // Only update balances for Savings and Checking accounts
-  }
-  
-  await Account.findByIdAndUpdate(accountId, {
-    $inc: { balance: amount }
-  });
-};
-
-// Helper function to apply transaction to account balances
-const applyTransactionToBalances = async (transaction) => {
-  const { type, account, fromAccount, toAccount, amount } = transaction;
-  
-  if (type === 'income' || type === 'expense') {
-    // For income/expense, amount is already correctly signed (positive/negative)
-    await updateAccountBalance(account, amount);
-  } else if (type === 'transfer') {
-    // For transfers: subtract from source, add to destination
-    await updateAccountBalance(fromAccount, -Math.abs(amount));
-    await updateAccountBalance(toAccount, Math.abs(amount));
-  }
-};
-
-// Helper function to reverse transaction from account balances
-const reverseTransactionFromBalances = async (transaction) => {
-  const { type, account, fromAccount, toAccount, amount } = transaction;
-  
-  if (type === 'income' || type === 'expense') {
-    // Reverse by negating the amount (works for both positive income and negative expense)
-    await updateAccountBalance(account, -amount);
-  } else if (type === 'transfer') {
-    // Reverse transfer: add back to source, subtract from destination
-    await updateAccountBalance(fromAccount, Math.abs(amount));
-    await updateAccountBalance(toAccount, -Math.abs(amount));
-  }
-};
+import { 
+  getOrCreateDefaultCategory, 
+  applyTransactionToBalances, 
+  reverseTransactionFromBalances,
+  validateTransactionFields,
+  processTransactionBalances,
+  TRANSACTION_TYPES
+} from "../utils/transactionUtils.js";
 
 // Create new transaction
 export const createTransaction = async (req, res) => {
   try {
     const { amount, category, account, fromAccount, toAccount, date, description, type } = req.body;
     
-    // Basic type validation
-    if (!type || !["income", "expense", "transfer"].includes(type)) {
-      return res.status(400).json({ message: "Transaction type is required and must be 'income', 'expense', or 'transfer'" });
-    }
-    
-    // Comprehensive field validation based on transaction type
-    if (type === 'income' || type === 'expense') {
-      // Income/Expense validation
-      if (!account) {
-        return res.status(400).json({ message: `${type} transactions require an account` });
-      }
-      if ((fromAccount && fromAccount.trim()) || (toAccount && toAccount.trim())) {
-        return res.status(400).json({ message: `${type} transactions cannot have fromAccount or toAccount fields` });
-      }
-      // Category is optional for income/expense
-    } else if (type === 'transfer') {
-      // Transfer validation
-      if (!fromAccount || !toAccount) {
-        return res.status(400).json({ message: `${type} transactions require both fromAccount and toAccount` });
-      }
-      if (fromAccount === toAccount) {
-        return res.status(400).json({ message: `${type} transactions cannot have the same fromAccount and toAccount` });
-      }
+    // Validate transaction fields using utility function
+    const validation = validateTransactionFields(type, { account, fromAccount, toAccount });
+    if (!validation.isValid) {
+      return res.status(400).json({ message: validation.message });
     }
     
     if (type === 'transfer') {
@@ -124,9 +62,14 @@ export const createTransaction = async (req, res) => {
         toAccount: toAccount
       });
       
-      // Update account balances
-      await updateAccountBalance(fromAccount, -Math.abs(amount));
-      await updateAccountBalance(toAccount, Math.abs(amount));
+      // Update account balances for transfer using the transfer transaction object
+      const transferBalanceData = {
+        type: TRANSACTION_TYPES.TRANSFER,
+        fromAccount,
+        toAccount,
+        amount: Math.abs(amount)
+      };
+      await processTransactionBalances(transferBalanceData, 'create');
       
       // Return both transactions
       res.status(201).json({
@@ -155,7 +98,7 @@ export const createTransaction = async (req, res) => {
       });
 
       // Update account balances based on transaction
-      await applyTransactionToBalances(transaction);
+      await processTransactionBalances(transaction, 'create');
 
       res.status(201).json(transaction);
     }
@@ -199,27 +142,13 @@ export const updateTransaction = async (req, res) => {
     }
 
     // Reverse the old transaction's balance effects
-    await reverseTransactionFromBalances(existingTransaction);
+    await processTransactionBalances(existingTransaction, 'delete');
     
     // If type is being updated, validate field combinations
     if (type) {
-      if (type === 'income' || type === 'expense') {
-        // Income/Expense validation
-        if (!account) {
-          return res.status(400).json({ message: `${type} transactions require an account` });
-        }
-        if ((fromAccount && fromAccount.trim()) || (toAccount && toAccount.trim())) {
-          return res.status(400).json({ message: `${type} transactions cannot have fromAccount or toAccount fields` });
-        }
-      } else if (type === 'transfer') {
-        // Transfer validation
-        if (!fromAccount || !toAccount) {
-          return res.status(400).json({ message: `${type} transactions require both fromAccount and toAccount` });
-        }
-        if (fromAccount === toAccount) {
-          return res.status(400).json({ message: `${type} transactions cannot have the same fromAccount and toAccount` });
-        }
-        // Account field will be set to toAccount for transfers
+      const validation = validateTransactionFields(type, { account, fromAccount, toAccount });
+      if (!validation.isValid) {
+        return res.status(400).json({ message: validation.message });
       }
     }
     
@@ -277,7 +206,7 @@ export const updateTransaction = async (req, res) => {
     if (!transaction) return res.status(404).json({ message: "Transaction not found" });
     
     // Apply the updated transaction's balance effects
-    await applyTransactionToBalances(transaction);
+    await processTransactionBalances(transaction, 'create');
     
     res.json(transaction);
   } catch (err) {
@@ -292,7 +221,7 @@ export const deleteTransaction = async (req, res) => {
     if (!transaction) return res.status(404).json({ message: "Transaction not found" });
     
     // Reverse the transaction's balance effects before deleting
-    await reverseTransactionFromBalances(transaction);
+    await processTransactionBalances(transaction, 'delete');
     
     await Transaction.findOneAndDelete({ _id: req.params.id, user: req.user._id });
     res.json({ message: "Transaction deleted" });

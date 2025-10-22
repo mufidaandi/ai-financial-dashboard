@@ -1,12 +1,14 @@
 // routes/authRoutes.js
 import express from "express";
 import { protect } from "../middleware/authMiddleware.js";
+import { passwordResetLimiter } from "../middleware/rateLimitMiddleware.js";
 import {
   registerUser,
   loginUser,
   updateProfile,
   changePassword,
   forgotPassword,
+  refreshToken,
   getOnboardingState,
   updateOnboardingState,
   completeTour,
@@ -23,6 +25,10 @@ router.post("/register", registerUser);
 // @desc    Login user and return token
 router.post("/login", loginUser);
 
+// @route   POST /api/auth/refresh
+// @desc    Refresh access token using refresh token
+router.post("/refresh", refreshToken);
+
 // @route   PUT /api/auth/profile
 // @desc    Update user profile
 router.put("/profile", protect, updateProfile);
@@ -33,7 +39,7 @@ router.put("/password", protect, changePassword);
 
 // @route   POST /api/auth/forgot-password
 // @desc    Reset password directly (no email)
-router.post("/forgot-password", forgotPassword);
+router.post("/forgot-password", passwordResetLimiter, forgotPassword);
 
 // @route   GET /api/auth/onboarding
 // @desc    Get user's onboarding state
