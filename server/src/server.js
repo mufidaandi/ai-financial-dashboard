@@ -29,13 +29,8 @@ connectDB().catch(err => {
   console.error('Database connection failed:', err.message);
 });
 
-// Configure CORS with specific options
-const allowedOrigins = [
-  'http://localhost:5173', // Local development (original)
-  'http://localhost:5174', // Local development (alternative port)
-  'https://expensure.vercel.app', // Production frontend,
-  'https://ai-financial-dashboard.vercel.app'
-];
+// Configure CORS with specific options from environment variables
+const allowedOrigins = process.env.CORS_ORIGINS.split(',').map(origin => origin.trim());
 
 app.use(cors({
   origin: function (origin, callback) {
