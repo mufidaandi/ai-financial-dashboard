@@ -18,12 +18,12 @@ const userSchema = new mongoose.Schema(
     country: {
       type: String,
       default: "US",
-      enum: ["US", "CA", "GB", "EU", "JP", "AU", "IN", "CN", "BR", "MX"]
+      enum: ["US", "CA", "GB", "EU", "JP", "AU", "IN", "CN", "BR", "MX", "PH"]
     },
     currency: {
       type: String,
       default: "USD",
-      enum: ["USD", "CAD", "GBP", "EUR", "JPY", "AUD", "INR", "CNY", "BRL", "MXN"]
+      enum: ["USD", "CAD", "GBP", "EUR", "JPY", "AUD", "INR", "CNY", "BRL", "MXN", "PHP"]
     },
     onboarding: {
       hasSeenOnboarding: {

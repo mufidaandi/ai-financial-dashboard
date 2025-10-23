@@ -91,22 +91,30 @@ function Settings() {
       // Handle the response structure - the API returns { user: {...} }
       const userData = response.user || response;
       
+      // Get current stored data from localStorage to preserve tokens
+      const storedData = JSON.parse(localStorage.getItem("user") || "{}");
+      
       // Update context with new user data, preserving existing structure
       let updatedUser;
+      let updatedStoredData;
+      
       if (user.user) {
-        // Nested structure
+        // Nested structure - update only the user object
         updatedUser = {
-          ...user,
-          user: {
-            ...user.user,
-            name: userData.name,
-            email: userData.email,
-            country: userData.country,
-            currency: userData.currency
-          }
+          ...user.user,
+          name: userData.name,
+          email: userData.email,
+          country: userData.country,
+          currency: userData.currency
+        };
+        
+        // Preserve the full stored structure with tokens
+        updatedStoredData = {
+          ...storedData,
+          user: updatedUser
         };
       } else {
-        // Flat structure
+        // Flat structure - update the user directly
         updatedUser = {
           ...user,
           name: userData.name,
@@ -114,11 +122,19 @@ function Settings() {
           country: userData.country,
           currency: userData.currency
         };
+        
+        // Preserve tokens in localStorage but update user data
+        updatedStoredData = {
+          ...storedData,
+          ...updatedUser
+        };
       }
-      setUser(updatedUser);
       
-      // Update localStorage
-      localStorage.setItem("user", JSON.stringify(updatedUser));
+      // Update context (setUser expects just the user object, not the full auth structure)
+      setUser(user.user ? updatedUser : updatedUser);
+      
+      // Update localStorage with full structure including tokens
+      localStorage.setItem("user", JSON.stringify(updatedStoredData));
       
       success("Profile updated successfully!");
     } catch (err) {
@@ -179,30 +195,46 @@ function Settings() {
       // Handle the response structure - the API returns { user: {...} }
       const userData = response.user || response;
       
+      // Get current stored data from localStorage to preserve tokens
+      const storedData = JSON.parse(localStorage.getItem("user") || "{}");
+      
       // Update context with new user data, preserving existing structure  
       let updatedUser;
+      let updatedStoredData;
+      
       if (user.user) {
-        // Nested structure
+        // Nested structure - update only the user object
         updatedUser = {
-          ...user,
-          user: {
-            ...user.user,
-            country: userData.country,
-            currency: userData.currency
-          }
+          ...user.user,
+          country: userData.country,
+          currency: userData.currency
+        };
+        
+        // Preserve the full stored structure with tokens
+        updatedStoredData = {
+          ...storedData,
+          user: updatedUser
         };
       } else {
-        // Flat structure
+        // Flat structure - update the user directly
         updatedUser = {
           ...user,
           country: userData.country,
           currency: userData.currency
         };
+        
+        // Preserve tokens in localStorage but update user data
+        updatedStoredData = {
+          ...storedData,
+          ...updatedUser
+        };
       }
-      setUser(updatedUser);
       
-      // Update localStorage
-      localStorage.setItem("user", JSON.stringify(updatedUser));
+      // Update context (setUser expects just the user object, not the full auth structure)
+      setUser(user.user ? updatedUser : updatedUser);
+      
+      // Update localStorage with full structure including tokens
+      localStorage.setItem("user", JSON.stringify(updatedStoredData));
       
       // Update Settings Context
       updateSettings({

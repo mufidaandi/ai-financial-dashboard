@@ -12,7 +12,6 @@ import Transactions from "./pages/Transactions";
 import Budgets from "./pages/Budgets";
 import Settings from "./pages/Settings";
 import Insights from "./pages/Insights";
-import Profile from "./pages/Profile";
 import { OnboardingProvider } from "./context/OnboardingContext";
 import TourTooltip from "./components/ui/TourTooltip";
 import WelcomeModal from "./components/ui/WelcomeModal";
@@ -99,17 +98,6 @@ function App() {
             <PrivateRoute>
               <Sidebar>
                 <Insights />
-              </Sidebar>
-            </PrivateRoute>
-          }
-        />
-
-        <Route
-          path="/profile"
-          element={
-            <PrivateRoute>
-              <Sidebar>
-                <Profile />
               </Sidebar>
             </PrivateRoute>
           }

@@ -22,7 +22,8 @@ export const COUNTRIES = [
   { code: "IN", name: "India", currency: "INR", symbol: "₹", locale: "en-IN" },
   { code: "CN", name: "China", currency: "CNY", symbol: "¥", locale: "zh-CN" },
   { code: "BR", name: "Brazil", currency: "BRL", symbol: "R$", locale: "pt-BR" },
-  { code: "MX", name: "Mexico", currency: "MXN", symbol: "$", locale: "es-MX" }
+  { code: "MX", name: "Mexico", currency: "MXN", symbol: "$", locale: "es-MX" },
+  { code: "PH", name: "Philippines", currency: "PHP", symbol: "₱", locale: "en-PH" }
 ];
 
 export const SettingsProvider = ({ children }) => {
