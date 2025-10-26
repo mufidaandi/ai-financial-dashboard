@@ -204,7 +204,7 @@ export function CustomDatePicker({ value, onChange, placeholder = "Pick a date",
             >
               <ChevronLeft className="h-4 w-4" />
             </button>
-            <h2 className="text-sm font-medium">
+            <h2 className="text-sm font-medium dark:text-gray-700">
               {monthNames[currentMonth.getMonth()]} {currentMonth.getFullYear()}
             </h2>
             <button
