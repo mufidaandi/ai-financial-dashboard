@@ -259,7 +259,7 @@ export const A11Y = {
 export const DEMO_DATA = {
   TEST_CREDENTIALS: {
     EMAIL: 'admin@test.com',
-    PASSWORD: 'admin'
+    PASSWORD: 'adminpw'
   },
   
   SAMPLE_CATEGORIES: [
