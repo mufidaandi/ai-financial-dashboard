@@ -5,7 +5,7 @@
 
 A comprehensive personal finance management application with AI-powered insights and recommendations. Track your expenses, manage accounts, and get intelligent financial advice powered by Google's Gemini AI.
 
-![Financial Dashboard](https://img.shields.io/badge/Status-Active-green) ![React](https://img.shields.io/badge/React-19.1.1-blue) ![Node.js](https://img.shields.io/badge/Node.js-Express-green) ![MongoDB](https://img.shields.io/badge/Database-MongoDB-brightgreen)
+![Financial Dashboard](https://img.shields.io/badge/Status-Active-green) ![React](https://img.shields.io/badge/React-19.1.1-blue) ![Node.js](https://img.shields.io/badge/Node.js-Express-green) ![MongoDB](https://img.shields.io/badge/Database-MongoDB-brightgreen) [![Playwright Tests](https://github.com/mufidaandi/expensure-ai-financial-dashboard/actions/workflows/playwright.yml/badge.svg?branch=main)](https://github.com/mufidaandi/expensure-ai-financial-dashboard/actions/workflows/playwright.yml)
 
 ## ✨ Features
 
